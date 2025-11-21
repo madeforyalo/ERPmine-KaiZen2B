@@ -39,12 +39,40 @@
       </span>
     </p>
 
-        <p>
+    <p>
       <label style="font-weight: bold;">Rango de fechas:</label>
-      <%= date_field_tag 'date', @date || Date.today, size: 10 %>
+
+      <% range_options = [
+        ['all time',      'all_time'],
+        ['esta semana',   'this_week'],
+        ['última semana', 'last_week'],
+        ['este mes',      'this_month'],
+        ['último mes',    'last_month'],
+        ['este año',      'this_year'],
+        ['Custom Range',  'custom']
+      ] %>
+
+      <%= select_tag 'range_type',
+            options_for_select(range_options, @range_type),
+            onchange: 'this.form.submit();' %>
 
       &nbsp;&nbsp;
 
+      <span style="font-weight:bold; margin-right:4px;">Desde</span>
+      <%= date_field_tag 'from',
+            (@from_date || Date.today.beginning_of_week),
+            size: 10,
+            disabled: (@range_type != 'custom') %>
+
+      &nbsp;&nbsp;
+
+      <span style="font-weight:bold; margin-right:4px;">hasta</span>
+      <%= date_field_tag 'to',
+            (@to_date || Date.today),
+            size: 10,
+            disabled: (@range_type != 'custom') %>
+
+      &nbsp;&nbsp;
       <span style="font-weight:bold; margin-right:4px;">Estado:</span>
       <%= select_tag 'status',
             options_for_select(['Empty', 'Nuevo', 'Rechazada', 'Submitted'], params[:status]),
