@@ -73,14 +73,10 @@
             disabled: (@range_type != 'custom') %>
 
       &nbsp;&nbsp;
-      <span style="font-weight:bold; margin-right:4px;">Estado:</span>
-      <%= select_tag 'status',
-            options_for_select(['Empty', 'Nuevo', 'Rechazada', 'Submitted'], params[:status]),
-            include_blank: true %>
 
-      &nbsp;&nbsp;
       <%= submit_tag 'Aceptar', class: 'small', name: nil %>
     </p>
+
 
   </div>
 <% end %>
