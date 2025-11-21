@@ -61,8 +61,54 @@ class TimesheetsController < ApplicationController
   private
 
   def setup_dates
-    @date = params[:date] ? Date.parse(params[:date]) : Date.today
-    @start_of_week = @date.beginning_of_week
-    @end_of_week   = @date.end_of_week
+    @range_type = params[:range_type].presence || 'this_week'
+    today = Date.today
+
+    case @range_type
+    when 'all_time'
+      @from_date = nil
+      @to_date   = nil
+
+    when 'this_week'
+      ref = params[:ref_date].present? ? Date.parse(params[:ref_date]) : today
+      @from_date = ref.beginning_of_week
+      @to_date   = ref.end_of_week
+
+    when 'last_week'
+      ref = params[:ref_date].present? ? Date.parse(params[:ref_date]) : today
+      ref = ref - 7
+      @from_date = ref.beginning_of_week
+      @to_date   = ref.end_of_week
+
+    when 'this_month'
+      ref = params[:ref_date].present? ? Date.parse(params[:ref_date]) : today
+      @from_date = ref.beginning_of_month
+      @to_date   = ref.end_of_month
+
+    when 'last_month'
+      ref = params[:ref_date].present? ? Date.parse(params[:ref_date]) : today
+      ref = (ref - 1.month)
+      @from_date = ref.beginning_of_month
+      @to_date   = ref.end_of_month
+
+    when 'this_year'
+      ref = params[:ref_date].present? ? Date.parse(params[:ref_date]) : today
+      @from_date = ref.beginning_of_year
+      @to_date   = ref.end_of_year
+
+    when 'custom'
+      @from_date = params[:from].present? ? Date.parse(params[:from]) : today.beginning_of_week
+      @to_date   = params[:to].present?   ? Date.parse(params[:to])   : today
+    else
+      # fallback: esta semana
+      @range_type = 'this_week'
+      @from_date = today.beginning_of_week
+      @to_date   = today.end_of_week
+    end
+
+    # Compatibilidad con lo que ya usás en la tabla
+    @date          = today
+    @start_of_week = @from_date || today.beginning_of_week
+    @end_of_week   = @to_date   || today.end_of_week
   end
 end
