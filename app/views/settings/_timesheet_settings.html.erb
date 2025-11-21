@@ -1,0 +1,48 @@
+<fieldset class="box tabular">
+  <legend>Sistema de Aprobación</legend>
+
+  <p>
+    <label><%= l(:label_timesheet_submission_deadline) %></label>
+    <%= select_tag 'settings[submission_deadline_day]', 
+          options_for_select([
+            [l(:day_monday), 'Monday'],
+            [l(:day_tuesday), 'Tuesday'],
+            [l(:day_wednesday), 'Wednesday'],
+            [l(:day_thursday), 'Thursday'],
+            [l(:day_friday), 'Friday'],
+            [l(:day_saturday), 'Saturday'],
+            [l(:day_sunday), 'Sunday']
+          ], @settings['submission_deadline_day']) %>
+          
+    &nbsp;
+    <%= select_tag 'settings[submission_deadline_time]', 
+          options_for_select(
+            (0..23).map { |h| ["#{h.to_s.rjust(2, '0')}:00", "#{h.to_s.rjust(2, '0')}:00"] }, 
+            @settings['submission_deadline_time']
+          ) %>
+  </p>
+
+  <p>
+    <label><%= l(:label_timesheet_auto_approve) %></label>
+    <%= check_box_tag 'settings[auto_approve]', 1, @settings['auto_approve'] %>
+  </p>
+
+  <p>
+    <label><%= l(:label_timesheet_ack_text) %></label>
+    <%= text_area_tag 'settings[submission_ack_text]', @settings['submission_ack_text'], rows: 3, style: 'width: 90%' %>
+  </p>
+</fieldset>
+
+<fieldset class="box tabular">
+  <legend>Notificaciones</legend>
+
+  <p>
+    <label><%= l(:label_timesheet_reminder_enabled) %></label>
+    <%= check_box_tag 'settings[reminder_email_enabled]', 1, @settings['reminder_email_enabled'] %>
+  </p>
+
+  <p>
+    <label><%= l(:label_timesheet_reminder_text) %></label>
+    <%= text_area_tag 'settings[non_submission_email_message]', @settings['non_submission_email_message'], rows: 3, style: 'width: 90%' %>
+  </p>
+</fieldset>

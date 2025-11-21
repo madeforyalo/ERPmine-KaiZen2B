@@ -1,0 +1,76 @@
+<h2>Time</h2>
+
+<%= form_tag({controller: 'timesheets', action: 'index'}, {method: :get, id: 'query_form'}) do %>
+  <div class="box tabular" style="background-color: #f6f6f6; padding: 10px; border: 1px solid #e4e4e4;">
+    
+    <p>
+      <label style="font-weight: bold;">Proyecto:</label>
+      <%= select_tag 'project_id', 
+            options_from_collection_for_select(@projects, 'id', 'name', @project.try(:id)), 
+            prompt: "--- Seleccione un Proyecto ---",
+            onchange: "this.form.submit();" %> 
+            &nbsp;&nbsp;
+      
+      <label>Miembro:</label>
+      <%= select_tag 'user_id', options_for_select([['All Users', '']]), disabled: true %>
+      
+      <span style="float:right;">
+         <%= link_to 'New Timesheet', '#', class: 'icon icon-add' %>
+      </span>
+    </p>
+
+    <p>
+      <label style="font-weight: bold;">Rango de fechas:</label>
+      <%= date_field_tag 'date', @date || Date.today, :size => 10 %>
+      
+      &nbsp;&nbsp;
+      
+      <label>Estado:</label>
+      <%= select_tag 'status', options_for_select(['Empty', 'Nuevo', 'Rechazada', 'Submitted']), include_blank: true %>
+      
+      &nbsp;&nbsp;
+      <%= submit_tag 'Aceptar', :class => "small", :name => nil %>
+    </p>
+
+  </div>
+<% end %>
+
+<% unless @project %>
+  <p class="nodata">Por favor, seleccione un proyecto arriba para ver las hojas de tiempo.</p>
+<% else %>
+
+  <div class="autoscroll">
+    <p>Total: <b>0,00 hora</b></p>
+    
+    <table class="list timesheets">
+      <thead>
+        <tr>
+          <th>Semana</th>
+          <th>Fecha de inicio</th>
+          <th>Usuario</th>
+          <th>Horas</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if @users.any? %>
+          <% @users.each do |user| %>
+            <tr class="<%= cycle("odd", "even") %>">
+              <td><%= @start_of_week.cweek %></td>
+              <td><%= format_date(@start_of_week) %></td>
+              <td><%= link_to_user user %></td>
+              <td align="center">0.00</td>
+              <td align="center">Empty</td>
+              <td class="buttons">
+                 <%= link_to image_tag('edit.png'), '#', title: 'Editar' %>
+              </td>
+            </tr>
+          <% end %>
+        <% else %>
+          <tr><td colspan="6" class="nodata">No hay usuarios en este proyecto.</td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>
