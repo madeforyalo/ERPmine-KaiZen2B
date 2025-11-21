@@ -1,47 +1,75 @@
-<h2>Time</h2>
+<h2><%= l(:label_timesheets) %></h2>
 
-<%= form_tag({controller: 'timesheets', action: 'index'}, {method: :get, id: 'query_form'}) do %>
+<%= form_tag(timesheets_path, method: :get, id: 'query_form') do %>
   <div class="box tabular" style="background-color: #f6f6f6; padding: 10px; border: 1px solid #e4e4e4;">
-    
+
     <p>
-      <label style="font-weight: bold;">Proyecto:</label>
-      <%= select_tag 'project_id', 
-            options_from_collection_for_select(@projects, 'id', 'name', @project.try(:id)), 
-            prompt: "--- Seleccione un Proyecto ---",
-            onchange: "this.form.submit();" %> 
-            &nbsp;&nbsp;
-      
-      <label>Miembro:</label>
-      <%= select_tag 'user_id', options_for_select([['All Users', '']]), disabled: true %>
-      
+      <!-- Proyecto / Grupos -->
+      <%= radio_button_tag 'filter_type', 'project', @filter_type == 'project', id: 'filter_type_project', onchange: 'this.form.submit();' %>
+      <label for="filter_type_project" style="font-weight: bold; margin-right: 4px;">Proyecto</label>
+
+      <%= select_tag 'project_id',
+            options_from_collection_for_select(@projects, 'id', 'name', @project.try(:id)),
+            prompt: '--- Seleccione un Proyecto ---',
+            onchange: 'this.form.submit();' %>
+
+      &nbsp;&nbsp;
+
+      <%= radio_button_tag 'filter_type', 'group', @filter_type == 'group', id: 'filter_type_group', onchange: 'this.form.submit();' %>
+      <label for="filter_type_group" style="font-weight: bold; margin-right: 4px;">Grupos</label>
+
+      <%= select_tag 'group_id',
+            options_from_collection_for_select(@groups, 'id', 'lastname', @group.try(:id)),
+            include_blank: true,
+            onchange: 'this.form.submit();' %>
+
+      &nbsp;&nbsp;
+
+      <!-- Miembro -->
+      <label style="font-weight: bold; margin-right: 4px;">Miembro</label>
+      <% user_options = @users_for_filter.map { |u| [u.name, u.id] } %>
+      <%= select_tag 'user_id',
+            options_for_select([[ 'All Users', '' ]] + user_options, @selected_user.try(:id)),
+            disabled: @users_for_filter.blank? %>
+
       <span style="float:right;">
-         <%= link_to 'New Timesheet', '#', class: 'icon icon-add' %>
+        <%= link_to 'New Timesheet', '#', class: 'icon icon-add' %>
       </span>
     </p>
 
     <p>
       <label style="font-weight: bold;">Rango de fechas:</label>
-      <%= date_field_tag 'date', @date || Date.today, :size => 10 %>
-      
+      <%= date_field_tag 'date', @date || Date.today, size: 10 %>
+
       &nbsp;&nbsp;
-      
+
       <label>Estado:</label>
-      <%= select_tag 'status', options_for_select(['Empty', 'Nuevo', 'Rechazada', 'Submitted']), include_blank: true %>
-      
+      <%= select_tag 'status',
+            options_for_select(['Empty', 'Nuevo', 'Rechazada', 'Submitted'], params[:status]),
+            include_blank: true %>
+
       &nbsp;&nbsp;
-      <%= submit_tag 'Aceptar', :class => "small", :name => nil %>
+      <%= submit_tag 'Aceptar', class: 'small', name: nil %>
     </p>
 
   </div>
 <% end %>
 
-<% unless @project %>
-  <p class="nodata">Por favor, seleccione un proyecto arriba para ver las hojas de tiempo.</p>
+<% if @users.blank? %>
+  <p class="nodata">
+    <% if @filter_type == 'project' && !@project %>
+      Por favor, seleccione un proyecto arriba para ver las hojas de tiempo.
+    <% elsif @filter_type == 'group' && !@group %>
+      Por favor, seleccione un grupo arriba para ver las hojas de tiempo.
+    <% else %>
+      No hay usuarios para el filtro seleccionado.
+    <% end %>
+  </p>
 <% else %>
 
   <div class="autoscroll">
     <p>Total: <b>0,00 hora</b></p>
-    
+
     <table class="list timesheets">
       <thead>
         <tr>
@@ -54,21 +82,17 @@
         </tr>
       </thead>
       <tbody>
-        <% if @users.any? %>
-          <% @users.each do |user| %>
-            <tr class="<%= cycle("odd", "even") %>">
-              <td><%= @start_of_week.cweek %></td>
-              <td><%= format_date(@start_of_week) %></td>
-              <td><%= link_to_user user %></td>
-              <td align="center">0.00</td>
-              <td align="center">Empty</td>
-              <td class="buttons">
-                 <%= link_to image_tag('edit.png'), '#', title: 'Editar' %>
-              </td>
-            </tr>
-          <% end %>
-        <% else %>
-          <tr><td colspan="6" class="nodata">No hay usuarios en este proyecto.</td></tr>
+        <% @users.each do |user| %>
+          <tr class="<%= cycle('odd', 'even') %>">
+            <td><%= @start_of_week.cweek %></td>
+            <td><%= format_date(@start_of_week) %></td>
+            <td><%= link_to_user user %></td>
+            <td align="center">0.00</td>
+            <td align="center">Empty</td>
+            <td class="buttons">
+               <%= link_to image_tag('edit.png'), '#', title: 'Editar' %>
+            </td>
+          </tr>
         <% end %>
       </tbody>
     </table>

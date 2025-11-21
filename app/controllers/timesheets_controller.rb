@@ -1,32 +1,61 @@
 class TimesheetsController < ApplicationController
-  # Quitamos los filtros automáticos de proyecto porque es una vista global inicial
+  # Vista global, no depende de un proyecto específico de entrada
+  before_action :require_login
   before_action :authorize_global, only: [:index]
 
   def index
-    # 1. Cargar todos los proyectos visibles por el usuario para el Dropdown
-    @projects = Project.active.visible.order('name').to_a
-    
-    # 2. Verificar si el usuario seleccionó un proyecto en el filtro
-    if params[:project_id].present?
-      @project = Project.find_by(id: params[:project_id])
-    end
+    # Tipo de filtro: 'project' (por defecto) o 'group'
+    @filter_type = params[:filter_type].presence || 'project'
 
-    # 3. Si hay proyecto seleccionado, buscamos los usuarios y datos
-    if @project
-      # Verificar permisos manualmente ya que quitamos el filtro automático
-      unless User.current.allowed_to?(:view_timesheets, @project)
-        render_403
-        return
+    # Listas base para los combos
+    @projects = Project.active.visible.order(:name).to_a
+    @groups   = Group.givable.order(:lastname).to_a
+
+    # Selecciones actuales
+    @project = Project.find_by(id: params[:project_id]) if params[:project_id].present?
+    @group   = Group.find_by(id: params[:group_id])     if params[:group_id].present?
+    @selected_user = User.find_by(id: params[:user_id]) if params[:user_id].present?
+
+    setup_dates
+
+    # Usuarios disponibles para el combo "Miembro", según filtro
+    @users_for_filter =
+      case @filter_type
+      when 'project'
+        @project ? @project.members.active.map(&:user).sort_by(&:name) : []
+      when 'group'
+        @group ? @group.users.active.sort_by(&:name) : []
+      else
+        []
       end
 
-      setup_dates # Método privado para fechas
-      
-      # Buscar usuarios del proyecto seleccionado
-      @users = @project.members.active.map(&:user).sort_by(&:name)
-    else
-      # Si no hay proyecto, listas vacías
-      @users = []
-    end
+    # Usuarios a mostrar en la tabla (puede estar filtrado por usuario)
+    @users =
+      case @filter_type
+      when 'project'
+        if @project
+          unless User.current.allowed_to?(:view_timesheets, @project)
+            render_403
+            return
+          end
+
+          list = @project.members.active.map(&:user)
+          list = list.select { |u| u.id == @selected_user.id } if @selected_user
+          list.sort_by(&:name)
+        else
+          []
+        end
+      when 'group'
+        if @group
+          list = @group.users.active
+          list = list.select { |u| u.id == @selected_user.id } if @selected_user
+          list.sort_by(&:name)
+        else
+          []
+        end
+      else
+        []
+      end
   end
 
   private
