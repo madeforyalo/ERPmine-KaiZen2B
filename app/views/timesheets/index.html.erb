@@ -94,7 +94,7 @@
 <% else %>
 
   <div class="autoscroll">
-    <p>Total: <b>0,00 hora</b></p>
+    <p>Total: <b><%= l_hours(@total_hours || 0.0) %></b></p>
 
     <table class="list timesheets">
       <thead>
@@ -113,8 +113,9 @@
             <td><%= @start_of_week.cweek %></td>
             <td><%= format_date(@start_of_week) %></td>
             <td><%= link_to_user user %></td>
-            <td align="center">0.00</td>
-            <td align="center">Empty</td>
+            <% hours = (@user_hours[user.id] || 0.0).to_f %>
+            <td align="center"><%= l_hours(hours) %></td>
+            <td align="center"><%= hours > 0 ? 'Nuevo' : 'Empty' %></td>
             <td class="buttons">
                <%= link_to image_tag('edit.png'), '#', title: 'Editar' %>
             </td>

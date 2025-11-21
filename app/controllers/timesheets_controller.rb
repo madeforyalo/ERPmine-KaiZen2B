@@ -12,9 +12,9 @@ class TimesheetsController < ApplicationController
     @groups   = Group.givable.order(:lastname).to_a
 
     # Selecciones actuales
-    @project = Project.find_by(id: params[:project_id]) if params[:project_id].present?
-    @group   = Group.find_by(id: params[:group_id])     if params[:group_id].present?
-    @selected_user = User.find_by(id: params[:user_id]) if params[:user_id].present?
+    @project        = Project.find_by(id: params[:project_id]) if params[:project_id].present?
+    @group          = Group.find_by(id: params[:group_id])     if params[:group_id].present?
+    @selected_user  = User.find_by(id: params[:user_id])       if params[:user_id].present?
 
     setup_dates
 
@@ -56,6 +56,28 @@ class TimesheetsController < ApplicationController
       else
         []
       end
+
+    # --------------------------------------------------------
+    # Cálculo de horas por usuario y total general
+    # --------------------------------------------------------
+    @user_hours  = {}
+    @total_hours = 0.0
+
+    if @users.any?
+      scope = TimeEntry.where(user_id: @users.map(&:id))
+
+      # Filtrar por proyecto si hay uno seleccionado
+      scope = scope.where(project_id: @project.id) if @project
+
+      # Filtrar por rango de fechas
+      scope = scope.where('spent_on >= ?', @from_date) if @from_date
+      scope = scope.where('spent_on <= ?', @to_date)   if @to_date
+
+      # Devuelve un hash { user_id => horas }
+      @user_hours = scope.group(:user_id).sum(:hours)
+
+      @total_hours = @user_hours.values.map(&:to_f).sum
+    end
   end
 
   private
@@ -100,13 +122,12 @@ class TimesheetsController < ApplicationController
       @from_date = params[:from].present? ? Date.parse(params[:from]) : today.beginning_of_week
       @to_date   = params[:to].present?   ? Date.parse(params[:to])   : today
     else
-      # fallback: esta semana
       @range_type = 'this_week'
       @from_date = today.beginning_of_week
       @to_date   = today.end_of_week
     end
 
-    # Compatibilidad con lo que ya usás en la tabla
+    # Compatibilidad con lo que usás en la tabla
     @date          = today
     @start_of_week = @from_date || today.beginning_of_week
     @end_of_week   = @to_date   || today.end_of_week
