@@ -1,3 +1,21 @@
+<% content_for :header_tags do %>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof $ !== 'undefined' && $.fn.select2) {
+        $('select.timesheets-select').select2({
+          width: 'resolve',
+          allowClear: true,
+          placeholder: ''
+        });
+      }
+    });
+  </script>
+<% end %>
+
+
 <h2><%= l(:label_timesheets) %></h2>
 
 <%= form_tag(timesheets_path, method: :get, id: 'query_form') do %>
@@ -12,7 +30,8 @@
       <%= select_tag 'project_id',
             options_from_collection_for_select(@projects, 'id', 'name', @project.try(:id)),
             prompt: '--- Seleccione un Proyecto ---',
-            onchange: 'this.form.submit();' %>
+            onchange: 'this.form.submit();',
+            class: 'timesheets-select' %>
 
       &nbsp;&nbsp;
 
@@ -23,7 +42,8 @@
       <%= select_tag 'group_id',
             options_from_collection_for_select(@groups, 'id', 'lastname', @group.try(:id)),
             include_blank: true,
-            onchange: 'this.form.submit();' %>
+            onchange: 'this.form.submit();',
+            class: 'timesheets-select' %>
 
       &nbsp;&nbsp;
 
@@ -32,7 +52,8 @@
       <% user_options = @users_for_filter.map { |u| [u.name, u.id] } %>
       <%= select_tag 'user_id',
             options_for_select([['All Users', '']] + user_options, @selected_user.try(:id)),
-            disabled: @users_for_filter.blank? %>
+            disabled: @users_for_filter.blank?,
+            class: 'timesheets-select' %>
 
       <span style="float:right;">
         <%= link_to 'New Timesheet', '#', class: 'icon icon-add' %>

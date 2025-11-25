@@ -1,3 +1,21 @@
+<% content_for :header_tags do %>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof $ !== 'undefined' && $.fn.select2) {
+        $('select.timesheets-select').select2({
+          width: 'resolve',
+          allowClear: true,
+          placeholder: ''
+        });
+      }
+    });
+  </script>
+<% end %>
+
+
 <h2>Hojas de Tiempo</h2>
 
 <%= form_tag(edit_timesheet_path, method: :get, id: 'timesheet_filter_form') do %>
@@ -7,7 +25,8 @@
       <label style="font-weight:bold;">Usuario</label>
       <%= select_tag 'user_id',
             options_from_collection_for_select(@users, 'id', 'name', @selected_user.id),
-            onchange: 'this.form.submit();' %>
+            onchange: 'this.form.submit();',
+            class: 'timesheets-select' %>
     </p>
 
     <p>
@@ -70,7 +89,8 @@
               <%= select_tag "rows[#{idx}][project_id]",
                 options_from_collection_for_select(@editable_projects, 'id', 'name', row[:project]&.id),
                 include_blank: true,
-                style: 'width: 220px;' %>
+                style: 'width: 220px;',
+                class: 'timesheets-select' %>
             </td>
             <td>
               <!-- por ahora: ID de la petición (Issue) en crudo -->
@@ -80,7 +100,8 @@
               <%= select_tag "rows[#{idx}][activity_id]",
                     options_from_collection_for_select(@activities_hours, 'id', 'name', row[:activity]&.id || @activities_hours.first&.id),
                     include_blank: false,
-                    style: 'width: 100px;' %>
+                    style: 'width: 100px;',
+                    class: 'timesheets-select' %>
             </td>
             <td>
               <%= text_field_tag "rows[#{idx}][comments]", row[:comments],
