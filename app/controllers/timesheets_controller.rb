@@ -85,35 +85,29 @@ class TimesheetsController < ApplicationController
   end
 
   def edit
-    # Todos los usuarios activos para el combo
     @users = User.active.order(:login).to_a
     @editable_projects = @allowed_projects
 
-    # Usuario seleccionado (o el actual si no viene param)
     @selected_user =
       if params[:user_id].present?
         User.find_by(id: params[:user_id])
       end || User.current
 
-    # Fecha base: la que viene en params o hoy
     date_param = params[:start_date] || params[:date]
     base_date  = date_param.present? ? Date.parse(date_param) : Date.today
 
-    # Semana que CONTIENE esa fecha, comenzando LUNES
     @week_start = base_date.beginning_of_week(:monday)
     @week_end   = @week_start + 6
     @week_days  = (@week_start..@week_end).to_a
 
-    # Solo actividad "Horas" para el combo
+    # Solo actividad "Horas"
     @activities_hours = TimeEntryActivity.where(name: 'Horas')
     @activities_hours = TimeEntryActivity.all if @activities_hours.empty?
 
-    # Time entries existentes del usuario en esa semana
     entries = TimeEntry.
       where(user_id: @selected_user.id).
       where(spent_on: @week_start..@week_end)
 
-    # agrupamos por (proyecto, issue, actividad, comentario) para armar filas
     grouped = entries.group_by { |te|
       [te.project_id, te.issue_id, te.activity_id, te.comments.to_s]
     }
@@ -136,20 +130,44 @@ class TimesheetsController < ApplicationController
       }
     end
 
-    # si no hay horas, arrancamos con una fila vacía
+    # Proyecto actual: el que vino de la pantalla principal o el de la primera fila
+    @current_project =
+      if params[:project_id].present?
+        @editable_projects.find { |p| p.id == params[:project_id].to_i }
+      elsif @rows.any? && @rows.first[:project]
+        @rows.first[:project]
+      end
+
+    # Si no hay filas, creamos una vacía con el proyecto preseleccionado (si lo hay)
     if @rows.empty?
       empty_daily = {}
       @week_days.each { |d| empty_daily[d] = 0.0 }
 
       @rows << {
-        project: nil,
+        project: @current_project,
         issue: nil,
-        activity: nil,
+        activity: @activities_hours.first,
         comments: '',
         daily_hours: empty_daily
       }
     end
+
+    # Issues para el combo de Petición
+    if @current_project
+      @issues_for_project = @current_project.issues.open.order(:id)
+    else
+      @issues_for_project = Issue.open.
+        where(project_id: @editable_projects.map(&:id)).
+        order(:id).
+        limit(200)
+    end
+
+    # Aseguramos incluir issues ya usadas aunque estén cerradas o fuera del scope
+    used_issues = @rows.map { |r| r[:issue] }.compact
+    missing     = used_issues.reject { |iss| @issues_for_project.include?(iss) }
+    @issues_for_project += missing
   end
+
 
   def save
   user       = User.find(params[:user_id])

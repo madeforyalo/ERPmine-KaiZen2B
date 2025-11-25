@@ -120,15 +120,23 @@
         <% @rows.each_with_index do |row, idx| %>
           <tr data-index="<%= idx %>">
             <td>
-              <%= select_tag "rows[#{idx}][project_id]",
-                options_from_collection_for_select(@editable_projects, 'id', 'name', row[:project]&.id),
+                <% selected_project_id = row[:project]&.id || @current_project&.id %>
+                <%= select_tag "rows[#{idx}][project_id]",
+                options_from_collection_for_select(@editable_projects, 'id', 'name', selected_project_id),
                 include_blank: true,
                 style: 'width: 220px;',
                 class: 'timesheets-select' %>
             </td>
             <td>
-              <!-- por ahora: ID de la petición (Issue) en crudo -->
-              <%= text_field_tag "rows[#{idx}][issue_id]", row[:issue]&.id, size: 6, style: 'width: 80px;' %>
+              <% issue_options = @issues_for_project.map do |iss|
+                ["Tarea ##{iss.id}: #{truncate(iss.subject, length: 60)}", iss.id]
+                end %>
+
+                <%= select_tag "rows[#{idx}][issue_id]",
+                    options_for_select(issue_options, row[:issue]&.id),
+                    include_blank: true,
+                    style: 'width: 260px;',
+                    class: 'timesheets-select' %>
             </td>
             <td>
               <%= select_tag "rows[#{idx}][activity_id]",
