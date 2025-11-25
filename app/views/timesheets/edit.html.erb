@@ -37,8 +37,11 @@
   </div>
 <% end %>
 
-<%= form_tag('#', method: :post, id: 'timesheet_edit_form') do %>
+<%= form_tag(timesheets_save_path, method: :post, id: 'timesheet_edit_form') do %>
   <div class="box">
+    <%= hidden_field_tag :user_id, @selected_user.id %>
+    <%= hidden_field_tag :week_start, @week_start %>
+
     <div style="text-align:right; margin-bottom:5px;">
       <a href="#" id="add_row_top" class="icon icon-add">Add Row</a>
     </div>
@@ -103,8 +106,8 @@
 
     <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
       <div>
-        <%= submit_tag 'Guardar', class: 'button' %>
-        <%= submit_tag 'Save and continue', class: 'button' %>
+        <%= submit_tag 'Guardar', class: 'button', name: 'save' %>
+        <%= submit_tag 'Save and continue', class: 'button', name: 'save_and_continue' %>
       </div>
       <div>
         <a href="#" id="add_row_bottom" class="icon icon-add">Add Row</a>

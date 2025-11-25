@@ -146,6 +146,93 @@ class TimesheetsController < ApplicationController
     end
   end
 
+  def save
+  user       = User.find(params[:user_id])
+  week_start = Date.parse(params[:week_start])
+  week_end   = week_start + 6
+
+  # Por ahora: sólo el propio usuario o admin pueden guardar
+  unless User.current == user || User.current.admin?
+    render_403
+    return
+  end
+
+  TimeEntry.transaction do
+    # La grilla es la "verdad" de la semana: borramos todo y recreamos
+    TimeEntry.where(user_id: user.id, spent_on: week_start..week_end).destroy_all
+
+    rows      = params[:rows] || {}
+    timesheet = nil
+
+    rows.each_value do |row|
+      project_id  = row[:project_id].presence
+      activity_id = row[:activity_id].presence
+      issue_id    = row[:issue_id].presence
+      comments    = row[:comments].to_s
+      hours_hash  = row[:hours] || {}
+
+      # si no hay proyecto, ignoramos la fila
+      next if project_id.blank?
+
+      project = Project.find_by(id: project_id)
+      next unless project
+
+      hours_hash.each do |day_str, value|
+        # soportar 1,5 y 1.5
+        hours = value.to_s.tr(',', '.').to_f
+        next if hours <= 0.0
+
+        spent_on = Date.parse(day_str)
+
+        # creamos/obtenemos la Timesheet de esa semana
+        timesheet ||= Timesheet.find_or_create_by!(
+          user_id:      user.id,
+          period_start: week_start,
+          period_end:   week_end
+        ) do |ts|
+          ts.status ||= 'draft'
+        end
+
+        te              = TimeEntry.new
+        te.user_id      = user.id
+        te.project_id   = project.id
+        te.issue_id     = issue_id if issue_id.present?
+        te.activity_id  = activity_id if activity_id.present?
+        te.spent_on     = spent_on
+        te.hours        = hours
+        te.comments     = comments
+        te.timesheet_id = timesheet.id
+        te.save!
+      end
+    end
+
+    # Si al final no quedó ninguna hora, eliminamos la timesheet vacía
+    if timesheet && timesheet.time_entries.count == 0
+      timesheet.destroy
+    end
+  end
+
+  flash[:notice] = 'Hoja de tiempo guardada correctamente.'
+
+  # Redirección según botón
+  if params[:save_and_continue]
+    # se queda en la misma semana para seguir cargando
+    redirect_to edit_timesheet_path(user_id: user.id, start_date: week_start)
+  else
+    # botón "Guardar": vuelve al listado principal
+    redirect_to timesheets_path
+  end
+
+rescue => e
+  flash[:error] = "Error al guardar la hoja de tiempo: #{e.message}"
+  redirect_back fallback_location: edit_timesheet_path(
+    user_id:   params[:user_id],
+    start_date: params[:week_start]
+  )
+end
+
+
+
   private
 
   def setup_dates
