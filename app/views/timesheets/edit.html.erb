@@ -215,53 +215,92 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  function addRow() {
-    var tbody = document.getElementById('timesheet_rows');
-    if (!tbody) return;
 
-    var rows = tbody.querySelectorAll('tr');
-    var lastRow = rows[rows.length - 1];
-    if (!lastRow) return;
+  // Re-inicializa Select2 en los selects de una fila dada
+  function initSelect2ForRow($row) {
+    if (typeof $ === 'undefined' || !$.fn.select2) return;
 
-    var newIndex = rows.length;
-    var clone = lastRow.cloneNode(true);
+    $row.find('select.timesheets-select').each(function() {
+      var $s = $(this);
 
-    clone.setAttribute('data-index', newIndex);
-
-    // actualizar names de los inputs al nuevo índice
-    clone.querySelectorAll('input, select').forEach(function(el) {
-      if (el.name) {
-        el.name = el.name.replace(/rows\[\d+\]/, 'rows[' + newIndex + ']');
+      // por las dudas, si ya tenía select2, destruirlo
+      if ($s.data('select2')) {
+        $s.select2('destroy');
       }
-      if (el.type === 'number' || el.type === 'text') {
-        el.value = '';
+
+      $s.select2({
+        width: 'style',
+        allowClear: true,
+        placeholder: ''
+      });
+    });
+  }
+
+  function addRow() {
+    var $tbody = $('#timesheet_rows');
+    if (!$tbody.length) return;
+
+    var $rows  = $tbody.find('tr');
+    var $last  = $rows.last();
+    if (!$last.length) return;
+
+    var newIndex = $rows.length;
+    var $clone   = $last.clone();
+
+    // nuevo índice de fila
+    $clone.attr('data-index', newIndex);
+
+    // eliminar wrappers de select2 clonados
+    $clone.find('span.select2').remove();
+    $clone.find('select').show(); // que los <select> vuelvan a ser visibles
+
+    // reindexar names / ids y limpiar valores de inputs
+    $clone.find('input, select').each(function() {
+      var $el = $(this);
+
+      // actualizar name rows[0] -> rows[newIndex]
+      if ($el.attr('name')) {
+        $el.attr('name', $el.attr('name').replace(/rows\[\d+\]/, 'rows[' + newIndex + ']'));
+      }
+
+      // actualizar id ...-0 -> ...-newIndex (para issue-select-XX, etc.)
+      if ($el.attr('id')) {
+        $el.attr('id', $el.attr('id').replace(/-\d+$/, '-' + newIndex));
+      }
+
+      // limpiar valores de texto / número
+      if ($el.is('input[type="number"], input[type="text"]')) {
+        $el.val('');
       }
     });
 
-    tbody.appendChild(clone);
+    // actualizar data-row-index del proyecto de la nueva fila
+    $clone.find('.project-select').data('row-index', newIndex);
+
+    $tbody.append($clone);
+
+    // inicializar Select2 en la nueva fila
+    initSelect2ForRow($clone);
   }
 
-  var addTop = document.getElementById('add_row_top');
-  var addBottom = document.getElementById('add_row_bottom');
-
-  if (addTop) addTop.addEventListener('click', function(e) {
+  // botones Add Row (arriba y abajo)
+  $('#add_row_top, #add_row_bottom').on('click', function(e) {
     e.preventDefault();
     addRow();
   });
 
-  if (addBottom) addBottom.addEventListener('click', function(e) {
+  // eliminar fila (dejamos al menos 1)
+  $('#timesheet_rows').on('click', '.remove-row', function(e) {
     e.preventDefault();
-    addRow();
-  });
-
-  document.getElementById('timesheet_rows').addEventListener('click', function(e) {
-    if (e.target.classList.contains('remove-row')) {
-      e.preventDefault();
-      var tr = e.target.closest('tr');
-      if (tr && this.querySelectorAll('tr').length > 1) {
-        tr.remove();
-      }
+    var $tbody = $('#timesheet_rows');
+    var $rows  = $tbody.find('tr');
+    if ($rows.length > 1) {
+      $(this).closest('tr').remove();
     }
   });
+
+  // por si acaso, re-inicializar Select2 en filas ya existentes al cargar
+  initSelect2ForRow($('#timesheet_rows'));
 });
 </script>
+
