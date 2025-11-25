@@ -1,20 +1,24 @@
 class TimesheetsController < ApplicationController
   # Vista global, no depende de un proyecto específico de entrada
   before_action :require_login
-  before_action :authorize_global, only: [:index]
+  before_action :authorize_global, only: [:index, :edit, :save]
+  before_action :set_allowed_projects, only: [:index, :edit]
+
 
   def index
-    # Tipo de filtro: 'project' (por defecto) o 'group'
     @filter_type = params[:filter_type].presence || 'project'
 
     # Listas base para los combos
-    @projects = Project.active.visible.order(:name).to_a
+    @projects = @allowed_projects
     @groups   = Group.givable.order(:lastname).to_a
 
     # Selecciones actuales
-    @project        = Project.find_by(id: params[:project_id]) if params[:project_id].present?
+    if params[:project_id].present?
+      @project = @projects.find { |p| p.id == params[:project_id].to_i }
+    end
     @group          = Group.find_by(id: params[:group_id])     if params[:group_id].present?
     @selected_user  = User.find_by(id: params[:user_id])       if params[:user_id].present?
+
 
     setup_dates
 
@@ -83,6 +87,7 @@ class TimesheetsController < ApplicationController
   def edit
     # Todos los usuarios activos para el combo
     @users = User.active.order(:login).to_a
+    @editable_projects = @allowed_projects
 
     # Usuario seleccionado (o el actual si no viene param)
     @selected_user =
@@ -234,6 +239,15 @@ end
 
 
   private
+
+  def set_allowed_projects
+    all = Project.active.visible.to_a
+    @allowed_projects = all.select do |p|
+      User.current.allowed_to?(:log_time, p) ||
+      User.current.allowed_to?(:edit_time_entries, p) ||
+      User.current.allowed_to?(:view_time_entries, p)
+    end
+  end
 
   def setup_dates
     @range_type = params[:range_type].presence || 'this_week'

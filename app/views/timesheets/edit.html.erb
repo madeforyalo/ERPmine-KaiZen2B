@@ -68,9 +68,9 @@
           <tr data-index="<%= idx %>">
             <td>
               <%= select_tag "rows[#{idx}][project_id]",
-                    options_from_collection_for_select(Project.active.visible, 'id', 'name', row[:project]&.id),
-                    include_blank: true,
-                    style: 'width: 220px;' %>
+                options_from_collection_for_select(@editable_projects, 'id', 'name', row[:project]&.id),
+                include_blank: true,
+                style: 'width: 220px;' %>
             </td>
             <td>
               <!-- por ahora: ID de la petición (Issue) en crudo -->

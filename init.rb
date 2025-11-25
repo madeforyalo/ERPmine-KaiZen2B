@@ -27,3 +27,14 @@ Redmine::Plugin.register :redmine_lite_timesheets do
        caption: 'Timesheets', 
        if: Proc.new { User.current.logged? }
 end
+
+Rails.configuration.to_prepare do
+  begin
+    defaults = Setting.default_projects_modules || []
+    unless defaults.include?('timesheets')
+      Setting.default_projects_modules = defaults + ['timesheets']
+    end
+  rescue => e
+    Rails.logger.info "Timesheets: no se pudo actualizar default_projects_modules (#{e.message})"
+  end
+end
