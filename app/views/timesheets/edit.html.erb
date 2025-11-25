@@ -66,19 +66,23 @@
             <td>
               <%= select_tag "rows[#{idx}][project_id]",
                     options_from_collection_for_select(Project.active.visible, 'id', 'name', row[:project]&.id),
-                    include_blank: true %>
+                    include_blank: true,
+                    style: 'width: 220px;' %>
             </td>
             <td>
               <!-- por ahora: ID de la petición (Issue) en crudo -->
-              <%= text_field_tag "rows[#{idx}][issue_id]", row[:issue]&.id, size: 6 %>
+              <%= text_field_tag "rows[#{idx}][issue_id]", row[:issue]&.id, size: 6, style: 'width: 80px;' %>
             </td>
             <td>
               <%= select_tag "rows[#{idx}][activity_id]",
-                    options_from_collection_for_select(TimeEntryActivity.all, 'id', 'name', row[:activity]&.id),
-                    include_blank: true %>
+                    options_from_collection_for_select(@activities_hours, 'id', 'name', row[:activity]&.id || @activities_hours.first&.id),
+                    include_blank: false,
+                    style: 'width: 100px;' %>
             </td>
             <td>
-              <%= text_field_tag "rows[#{idx}][comments]", row[:comments], size: 20 %>
+              <%= text_field_tag "rows[#{idx}][comments]", row[:comments],
+                    size: 40,
+                    style: 'width: 300px;' %>
             </td>
 
             <% @week_days.each do |day| %>

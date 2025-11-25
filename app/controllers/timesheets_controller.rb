@@ -99,6 +99,10 @@ class TimesheetsController < ApplicationController
     @week_end   = @week_start + 6
     @week_days  = (@week_start..@week_end).to_a
 
+    # Solo actividad "Horas" para el combo
+    @activities_hours = TimeEntryActivity.where(name: 'Horas')
+    @activities_hours = TimeEntryActivity.all if @activities_hours.empty?
+
     # Time entries existentes del usuario en esa semana
     entries = TimeEntry.
       where(user_id: @selected_user.id).
