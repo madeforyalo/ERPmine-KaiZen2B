@@ -1,8 +1,10 @@
 class TimesheetsController < ApplicationController
-  # Vista global, no depende de un proyecto específico de entrada
   before_action :require_login
   before_action :authorize_global, only: [:index, :edit, :save]
   before_action :set_allowed_projects, only: [:index, :edit]
+
+  helper_method :can_manage_timesheets_for?
+
 
 
   def index
@@ -85,13 +87,23 @@ class TimesheetsController < ApplicationController
   end
 
   def edit
-    @users = User.active.order(:login).to_a
+    @users = if can_manage_timesheets_for_others?
+      User.active.order(:login).to_a
+    else
+      [User.current]
+    end
     @editable_projects = @allowed_projects
 
     @selected_user =
-      if params[:user_id].present?
-        User.find_by(id: params[:user_id])
-      end || User.current
+    if params[:user_id].present?
+      User.find_by(id: params[:user_id])
+    end || User.current
+
+    # 🔒 Permiso: solo propio o coordinador/admin
+    unless can_manage_timesheets_for?(@selected_user)
+      render_403
+      return
+    end
 
     date_param = params[:start_date] || params[:date]
     base_date  = date_param.present? ? Date.parse(date_param) : Date.today
@@ -174,12 +186,12 @@ class TimesheetsController < ApplicationController
   week_start = Date.parse(params[:week_start])
   week_end   = week_start + 6
 
-  # Por ahora: sólo el propio usuario o admin pueden guardar
-  unless User.current == user || User.current.admin?
+  # 🔒 Permiso: propio, coordinador o admin
+  unless can_manage_timesheets_for?(user)
     render_403
     return
   end
-
+  
   TimeEntry.transaction do
     # La grilla es la "verdad" de la semana: borramos todo y recreamos
     TimeEntry.where(user_id: user.id, spent_on: week_start..week_end).destroy_all
@@ -282,6 +294,24 @@ end
       User.current.allowed_to?(:view_time_entries, p)
     end
   end
+
+  def in_group?(group_name)
+      User.current.groups.any? { |g| g.lastname == group_name }
+    end
+
+    # ¿Puede el usuario actual modificar la hoja de tiempo de "user"?
+    def can_manage_timesheets_for?(user)
+      return true if User.current.admin?
+      return true if user == User.current
+      return true if in_group?('KZN-Coordinadores')
+      false
+    end
+
+    # ¿Puede manejar hojas de otros usuarios?
+    def can_manage_timesheets_for_others?
+      return true if User.current.admin?
+      in_group?('KZN-Coordinadores')
+    end
 
   def setup_dates
     @range_type = params[:range_type].presence || 'this_week'
