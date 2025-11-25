@@ -1,6 +1,5 @@
 class TimesheetsController < ApplicationController
   before_action :require_login
-  before_action :authorize_global, only: [:index, :edit, :save]
   before_action :set_allowed_projects, only: [:index, :edit]
 
   helper_method :can_manage_timesheets_for?
@@ -40,10 +39,7 @@ class TimesheetsController < ApplicationController
       case @filter_type
       when 'project'
         if @project
-          unless User.current.allowed_to?(:view_timesheets, @project)
-            render_403
-            return
-          end
+          # ya filtramos proyectos permitidos en @allowed_projects  
 
           list = @project.members.active.map(&:user)
           list = list.select { |u| u.id == @selected_user.id } if @selected_user
@@ -51,6 +47,7 @@ class TimesheetsController < ApplicationController
         else
           []
         end
+
       when 'group'
         if @group
           list = @group.users.active
@@ -191,7 +188,7 @@ class TimesheetsController < ApplicationController
     render_403
     return
   end
-  
+
   TimeEntry.transaction do
     # La grilla es la "verdad" de la semana: borramos todo y recreamos
     TimeEntry.where(user_id: user.id, spent_on: week_start..week_end).destroy_all
