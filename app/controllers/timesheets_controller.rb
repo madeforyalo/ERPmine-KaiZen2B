@@ -80,6 +80,68 @@ class TimesheetsController < ApplicationController
     end
   end
 
+  def edit
+    # Todos los usuarios activos para el combo
+    @users = User.active.order(:login).to_a
+
+    # Usuario seleccionado (o el actual si no viene param)
+    @selected_user =
+      if params[:user_id].present?
+        User.find_by(id: params[:user_id])
+      end || User.current
+
+    # Fecha base: la que viene en params o hoy
+    date_param = params[:start_date] || params[:date]
+    base_date  = date_param.present? ? Date.parse(date_param) : Date.today
+
+    # Semana que CONTIENE esa fecha, comenzando LUNES
+    @week_start = base_date.beginning_of_week(:monday)
+    @week_end   = @week_start + 6
+    @week_days  = (@week_start..@week_end).to_a
+
+    # Time entries existentes del usuario en esa semana
+    entries = TimeEntry.
+      where(user_id: @selected_user.id).
+      where(spent_on: @week_start..@week_end)
+
+    # agrupamos por (proyecto, issue, actividad, comentario) para armar filas
+    grouped = entries.group_by { |te|
+      [te.project_id, te.issue_id, te.activity_id, te.comments.to_s]
+    }
+
+    @rows = grouped.map do |(project_id, issue_id, activity_id, comments), list|
+      daily = {}
+      @week_days.each { |d| daily[d] = 0.0 }
+
+      list.each do |e|
+        daily[e.spent_on] ||= 0.0
+        daily[e.spent_on] += e.hours.to_f
+      end
+
+      {
+        project:  Project.find_by(id: project_id),
+        issue:    Issue.find_by(id: issue_id),
+        activity: TimeEntryActivity.find_by(id: activity_id),
+        comments: comments,
+        daily_hours: daily
+      }
+    end
+
+    # si no hay horas, arrancamos con una fila vacía
+    if @rows.empty?
+      empty_daily = {}
+      @week_days.each { |d| empty_daily[d] = 0.0 }
+
+      @rows << {
+        project: nil,
+        issue: nil,
+        activity: nil,
+        comments: '',
+        daily_hours: empty_daily
+      }
+    end
+  end
+
   private
 
   def setup_dates
