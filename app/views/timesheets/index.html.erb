@@ -2,36 +2,23 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 
-  <style>
-    /* Caja cerrada (lo que se ve cuando el combo NO está desplegado) */
-    body.controller-timesheets .select2-container--default .select2-selection--single {
-      background-color: #ffffff !important;
-      border: 1px solid #555555 !important;
-      border-radius: 3px !important;
-      height: 28px !important;
-    }
-
-    body.controller-timesheets .select2-container--default .select2-selection--single .select2-selection__rendered {
-      background-color: #ffffff !important;
-      color: #222222 !important;
-      line-height: 26px !important;
-      padding-left: 6px !important;
-      font-weight: 500;
-    }
-
-    body.controller-timesheets .select2-container--default .select2-selection--single .select2-selection__arrow {
-      height: 26px !important;
-    }
-
-    /* Lista desplegable (opciones) */
-    body.controller-timesheets .select2-container--default .select2-results__option {
+   <style>
+    /* estilo general de los combos Select2 */
+    .select2-container--default .select2-selection--single {
       background-color: #ffffff;
-      color: #333333;
+      border: 1px solid #999999;
+      border-radius: 2px;
+      height: 28px;
     }
 
-    body.controller-timesheets .select2-container--default .select2-results__option--highlighted[aria-selected] {
-      background-color: #e0f0ff !important;
-      color: #000000 !important;
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+      color: #333333;
+      line-height: 26px;
+      padding-left: 4px;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+      height: 26px;
     }
   </style>
 
