@@ -35,6 +35,36 @@
         }
     </style>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+
+        $(document).on('change', '.project-select', function() {
+            var projectId = $(this).val();
+            var rowIndex  = $(this).data('row-index');
+
+            var issueSelect = $('#issue-select-' + rowIndex);
+
+            if (!issueSelect.length) return;
+
+            // limpiar opciones actuales
+            issueSelect.empty().trigger('change');
+
+            if (!projectId) return;
+
+            // cargar issues vía AJAX
+            $.getJSON('/timesheets/project_issues', { project_id: projectId }, function(data) {
+            data.forEach(function(item) {
+                var option = new Option(item.text, item.id, false, false);
+                issueSelect.append(option);
+            });
+
+            issueSelect.trigger('change');
+            });
+        });
+
+        });
+    </script>
+
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -122,22 +152,24 @@
             <td>
                 <% selected_project_id = row[:project]&.id || @current_project&.id %>
                 <%= select_tag "rows[#{idx}][project_id]",
-                options_from_collection_for_select(@editable_projects, 'id', 'name', selected_project_id),
-                include_blank: true,
-                style: 'width: 220px;',
-                class: 'timesheets-select' %>
+                        options_from_collection_for_select(@editable_projects, 'id', 'name', selected_project_id),
+                        include_blank: true,
+                        class: 'timesheets-select project-select',
+                        data: { row_index: idx } %>
             </td>
+
             <td>
-              <% issue_options = @issues_for_project.map do |iss|
+                <% issue_options = @issues_for_project.map do |iss|
                 ["Tarea ##{iss.id}: #{truncate(iss.subject, length: 60)}", iss.id]
                 end %>
 
                 <%= select_tag "rows[#{idx}][issue_id]",
                     options_for_select(issue_options, row[:issue]&.id),
                     include_blank: true,
-                    style: 'width: 260px;',
-                    class: 'timesheets-select' %>
+                    class: 'timesheets-select issue-select',
+                    id: "issue-select-#{idx}" %>
             </td>
+
             <td>
               <%= select_tag "rows[#{idx}][activity_id]",
                     options_from_collection_for_select(@activities_hours, 'id', 'name', row[:activity]&.id || @activities_hours.first&.id),

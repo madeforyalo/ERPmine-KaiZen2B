@@ -254,6 +254,22 @@ rescue => e
   )
 end
 
+def project_issues
+  project = Project.find_by(id: params[:project_id])
+
+  if project
+    issues = project.issues.open.order(:id)
+  else
+    issues = []
+  end
+
+  render json: issues.map { |iss|
+    {
+      id: iss.id,
+      text: "Tarea ##{iss.id}: #{iss.subject.truncate(60)}"
+    }
+  }
+end
 
 
   private
