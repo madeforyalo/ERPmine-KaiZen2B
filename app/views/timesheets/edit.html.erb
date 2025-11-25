@@ -156,7 +156,8 @@
                         options_from_collection_for_select(@editable_projects, 'id', 'name', selected_project_id),
                         include_blank: true,
                         class: 'timesheets-select project-select',
-                        data: { row_index: idx } %>
+                        data: { row_index: idx },
+                        style: 'width: 260px;' %>
             </td>
 
             <td>
@@ -168,7 +169,8 @@
                     options_for_select(issue_options, row[:issue]&.id),
                     include_blank: true,
                     class: 'timesheets-select issue-select',
-                    id: "issue-select-#{idx}" %>
+                    id: "issue-select-#{idx}",
+                    style: 'width: 320px;' %>
             </td>
 
             <td>
