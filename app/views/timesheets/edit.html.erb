@@ -148,39 +148,41 @@
     <table class="list">
       <thead>
         <tr>
-          <th>Proyecto</th>
-          <th>Petición</th>
-          <th>Actividad</th>
-          <th>Comentario</th>
-          <% day_names = I18n.t('date.abbr_day_names') %>
+          <th><%= l(:label_project) %></th>
+          <th><%= l(:label_issue) %></th>
+          <th><%= l(:field_activity) %></th>
+          <th><%= l(:field_comments) %></th>
           <% @week_days.each do |day| %>
             <th style="text-align:center;">
-              <%= day_names[day.wday] %><br/>
+              <%= day_name(day.cwday % 7) %><br/>
               <%= format_date(day) %>
             </th>
           <% end %>
-          <th style="text-align:center;">&nbsp;</th>
+          <th></th>
         </tr>
       </thead>
+
       <tbody id="timesheet_rows">
         <% @rows.each_with_index do |row, idx| %>
           <tr data-index="<%= idx %>">
+            <!-- Proyecto -->
             <td>
-                <% selected_project_id = row[:project]&.id || @current_project&.id %>
-                <%= select_tag "rows[#{idx}][project_id]",
-                        options_from_collection_for_select(@editable_projects, 'id', 'name', selected_project_id),
-                        include_blank: true,
-                        class: 'timesheets-select project-select',
-                        data: { row_index: idx },
-                        style: 'width: 260px;' %>
+              <% selected_project_id = row[:project]&.id || @current_project&.id %>
+              <%= select_tag "rows[#{idx}][project_id]",
+                    options_from_collection_for_select(@editable_projects, 'id', 'name', selected_project_id),
+                    include_blank: true,
+                    class: 'timesheets-select project-select',
+                    data: { row_index: idx },
+                    style: 'width: 260px;' %>
             </td>
 
+            <!-- Petición -->
             <td>
-                <% issue_options = @issues_for_project.map do |iss|
-                ["Tarea ##{iss.id}: #{truncate(iss.subject, length: 60)}", iss.id]
-                end %>
+              <% issue_options = @issues_for_project.map do |iss|
+                   ["Tarea ##{iss.id}: #{truncate(iss.subject, length: 60)}", iss.id]
+                 end %>
 
-                <%= select_tag "rows[#{idx}][issue_id]",
+              <%= select_tag "rows[#{idx}][issue_id]",
                     options_for_select(issue_options, row[:issue]&.id),
                     include_blank: true,
                     class: 'timesheets-select issue-select',
@@ -188,43 +190,50 @@
                     style: 'width: 320px;' %>
             </td>
 
+            <!-- Actividad -->
             <td>
-                <% activity_options = @activities_for_project.map { |a| [a.name, a.id] } %>
-                <%= select_tag "rows[#{idx}][activity_id]",
+              <% activity_options = @activities_for_project.map { |a| [a.name, a.id] } %>
+              <%= select_tag "rows[#{idx}][activity_id]",
                     options_for_select(activity_options, row[:activity]&.id),
                     include_blank: true,
                     class: 'timesheets-select activity-select',
                     id: "activity-select-#{idx}",
                     style: 'width: 120px;' %>
             </td>
+
+            <!-- Comentario -->
             <td>
               <%= text_field_tag "rows[#{idx}][comments]", row[:comments],
-                    size: 40,
-                    style: 'width: 300px;' %>
+                    style: 'width: 260px;' %>
             </td>
 
-                <% @week_days.each do |day| %>
-                <% hours = row[:daily_hours][day] || 0.0 %>
-                <td style="text-align:center;">
-                    <%= number_field_tag "rows[#{idx}][hours][#{day}]", hours,
-                        step: 0.25, min: 0, style: 'width:60px;',
-                        class: 'hours-input',
-                        data: { day: day } %>
-            </td>
+            <!-- Horas por día -->
+            <% @week_days.each do |day| %>
+              <% hours = row[:daily_hours][day] || 0.0 %>
+              <td style="text-align:center;">
+                <%= number_field_tag "rows[#{idx}][hours][#{day}]", hours,
+                      step: 0.25, min: 0, style: 'width:60px;',
+                      class: 'hours-input',
+                      data: { day: day } %>
+              </td>
             <% end %>
 
+            <!-- Borrar fila -->
             <td style="text-align:center;">
-              <a href="#" class="remove-row icon icon-del" title="Eliminar fila"></a>
+              <a href="#" class="icon icon-del remove-row"></a>
             </td>
           </tr>
         <% end %>
       </tbody>
+
       <tfoot>
         <tr id="totals-row">
-          <!-- celdas de Proyecto / Petición / Actividad / Comentario -->
-          <td colspan="4" style="text-align:right; font-weight:bold;">Total</td>
+          <!-- columnas de texto -->
+          <td colspan="4" style="text-align:right; font-weight:bold;">
+            Total
+          </td>
 
-          <!-- Subtotales por día -->
+          <!-- subtotales por día -->
           <% @week_days.each do |day| %>
             <td class="day-total"
                 data-day="<%= day %>"
@@ -233,13 +242,14 @@
             </td>
           <% end %>
 
-          <!-- Total general -->
+          <!-- total general -->
           <td style="text-align:center; font-weight:bold;">
             Total: <span id="grand-total">0.00</span>
           </td>
         </tr>
       </tfoot>
     </table>
+
 
     <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
       <div>
