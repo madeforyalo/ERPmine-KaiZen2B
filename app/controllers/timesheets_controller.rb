@@ -115,8 +115,12 @@ class TimesheetsController < ApplicationController
     @week_end   = @week_start + 6
     @week_days  = (@week_start..@week_end).to_a
 
+    @hours_activity =
+    TimeEntryActivity.active.find_by(name: 'Horas') ||
+    TimeEntryActivity.active.order(:position, :name).first
+
     # Actividades disponibles (para todos los proyectos)
-    @activities_for_project = TimeEntryActivity.active.order(:position, :name)
+    #@activities_for_project = TimeEntryActivity.active.order(:position, :name)
 
     # Time entries existentes del usuario en esa semana
     entries = TimeEntry.
@@ -174,7 +178,7 @@ class TimesheetsController < ApplicationController
       @rows << {
         project: @current_project,
         issue: nil,
-        activity: @activities_for_project.first,
+        activity: @hours_activity,
         comments: '',
         daily_hours: empty_daily
       }

@@ -193,16 +193,16 @@
 
             <!-- Actividad -->
             <td>
-            <% activity_collection = @activities_for_project || [] %>
-            <% activity_options = activity_collection.map { |a| [a.name, a.id] } %>
+                <% hours_act = @hours_activity %>
+                <% activity_options =
+                    hours_act ? [['Horas', hours_act.id]] : [] %>
 
-            <%= select_tag "rows[#{idx}][activity_id]",
-                    options_for_select(activity_options, row[:activity]&.id),
-                    include_blank: true,
-                    class: 'timesheets-select activity-select',
-                    id: "activity-select-#{idx}",
-                    style: 'width: 120px;' %>
+                <%= select_tag "rows[#{idx}][activity_id]",
+                        options_for_select(activity_options, (row[:activity] || hours_act)&.id),
+                        class: 'timesheets-select activity-select',
+                        style: 'width: 120px;' %>
             </td>
+
 
             <!-- Comentario -->
             <td>
