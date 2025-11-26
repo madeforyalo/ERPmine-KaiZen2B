@@ -84,6 +84,7 @@ class TimesheetsController < ApplicationController
   end
 
   def edit
+
     # Usuarios disponibles para el combo de arriba
     @users =
       if can_manage_timesheets_for_others?
@@ -113,6 +114,9 @@ class TimesheetsController < ApplicationController
     @week_start = base_date.beginning_of_week(:monday)
     @week_end   = @week_start + 6
     @week_days  = (@week_start..@week_end).to_a
+
+    # Actividades disponibles (para todos los proyectos)
+    @activities_for_project = TimeEntryActivity.active.order(:position, :name)
 
     # Time entries existentes del usuario en esa semana
     entries = TimeEntry.
@@ -150,19 +154,19 @@ class TimesheetsController < ApplicationController
         @rows.first[:project]
       end
 
-    # === PUNTO 3: acá se prepara la lista inicial de actividades ===
-    if @current_project
-      @activities_for_project = TimeEntryActivity.for_project(@current_project)
-    else
-      @activities_for_project = TimeEntryActivity.active
-    end
+    # # === PUNTO 3: acá se prepara la lista inicial de actividades ===
+    # if @current_project
+    #   @activities_for_project = TimeEntryActivity.for_project(@current_project)
+    # else
+    #   @activities_for_project = TimeEntryActivity.active
+    # end
 
-    # Incluir actividades ya usadas aunque no estén activas
-    used_activities = @rows.map { |r| r[:activity] }.compact
-    missing_acts    = used_activities.reject { |a| @activities_for_project.include?(a) }
-    @activities_for_project += missing_acts
+    # # Incluir actividades ya usadas aunque no estén activas
+    # used_activities = @rows.map { |r| r[:activity] }.compact
+    # missing_acts    = used_activities.reject { |a| @activities_for_project.include?(a) }
+    # @activities_for_project += missing_acts
 
-    # Si no hay filas, creamos una vacía usando proyecto/actividad actuales
+    # # Si no hay filas, creamos una vacía usando proyecto/actividad actuales
     if @rows.empty?
       empty_daily = {}
       @week_days.each { |d| empty_daily[d] = 0.0 }
