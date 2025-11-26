@@ -178,22 +178,25 @@
 
             <!-- Petición -->
             <td>
-              <% issue_options = @issues_for_project.map do |iss|
-                   ["Tarea ##{iss.id}: #{truncate(iss.subject, length: 60)}", iss.id]
-                 end %>
+                <% issue_collection = @issues_for_project || [] %>
+                <% issue_options = issue_collection.map do |iss|
+                    ["Tarea ##{iss.id}: #{truncate(iss.subject, length: 60)}", iss.id]
+                    end %>
 
-              <%= select_tag "rows[#{idx}][issue_id]",
-                    options_for_select(issue_options, row[:issue]&.id),
-                    include_blank: true,
-                    class: 'timesheets-select issue-select',
-                    id: "issue-select-#{idx}",
-                    style: 'width: 320px;' %>
+                <%= select_tag "rows[#{idx}][issue_id]",
+                        options_for_select(issue_options, row[:issue]&.id),
+                        include_blank: true,
+                        class: 'timesheets-select issue-select',
+                        id: "issue-select-#{idx}",
+                        style: 'width: 320px;' %>
             </td>
 
             <!-- Actividad -->
             <td>
-              <% activity_options = @activities_for_project.map { |a| [a.name, a.id] } %>
-              <%= select_tag "rows[#{idx}][activity_id]",
+            <% activity_collection = @activities_for_project || [] %>
+            <% activity_options = activity_collection.map { |a| [a.name, a.id] } %>
+
+            <%= select_tag "rows[#{idx}][activity_id]",
                     options_for_select(activity_options, row[:activity]&.id),
                     include_blank: true,
                     class: 'timesheets-select activity-select',
