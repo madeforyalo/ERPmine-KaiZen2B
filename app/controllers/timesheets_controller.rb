@@ -84,24 +84,29 @@ class TimesheetsController < ApplicationController
   end
 
   def edit
-    @users = if can_manage_timesheets_for_others?
-      User.active.order(:login).to_a
-    else
-      [User.current]
-    end
+    # Usuarios disponibles para el combo de arriba
+    @users =
+      if can_manage_timesheets_for_others?
+        User.active.order(:login).to_a
+      else
+        [User.current]
+      end
+
     @editable_projects = @allowed_projects
 
+    # Usuario seleccionado (o el actual si no viene)
     @selected_user =
-    if params[:user_id].present?
-      User.find_by(id: params[:user_id])
-    end || User.current
+      if params[:user_id].present?
+        User.find_by(id: params[:user_id])
+      end || User.current
 
-    # 🔒 Permiso: solo propio o coordinador/admin
+    # Permiso: propio, coordinador o admin
     unless can_manage_timesheets_for?(@selected_user)
       render_403
       return
     end
 
+    # Fecha base y semana (lunes–domingo)
     date_param = params[:start_date] || params[:date]
     base_date  = date_param.present? ? Date.parse(date_param) : Date.today
 
@@ -109,14 +114,12 @@ class TimesheetsController < ApplicationController
     @week_end   = @week_start + 6
     @week_days  = (@week_start..@week_end).to_a
 
-    # Solo actividad "Horas"
-    @activities_hours = TimeEntryActivity.where(name: 'Horas')
-    @activities_hours = TimeEntryActivity.all if @activities_hours.empty?
-
+    # Time entries existentes del usuario en esa semana
     entries = TimeEntry.
       where(user_id: @selected_user.id).
       where(spent_on: @week_start..@week_end)
 
+    # Agrupamos por (proyecto, issue, actividad, comentario)
     grouped = entries.group_by { |te|
       [te.project_id, te.issue_id, te.activity_id, te.comments.to_s]
     }
@@ -139,7 +142,7 @@ class TimesheetsController < ApplicationController
       }
     end
 
-    # Proyecto actual: el que vino de la pantalla principal o el de la primera fila
+    # Proyecto actual: el que vino desde la lista o el de la primera fila
     @current_project =
       if params[:project_id].present?
         @editable_projects.find { |p| p.id == params[:project_id].to_i }
@@ -147,7 +150,19 @@ class TimesheetsController < ApplicationController
         @rows.first[:project]
       end
 
-    # Si no hay filas, creamos una vacía con el proyecto preseleccionado (si lo hay)
+    # === PUNTO 3: acá se prepara la lista inicial de actividades ===
+    if @current_project
+      @activities_for_project = TimeEntryActivity.for_project(@current_project)
+    else
+      @activities_for_project = TimeEntryActivity.active
+    end
+
+    # Incluir actividades ya usadas aunque no estén activas
+    used_activities = @rows.map { |r| r[:activity] }.compact
+    missing_acts    = used_activities.reject { |a| @activities_for_project.include?(a) }
+    @activities_for_project += missing_acts
+
+    # Si no hay filas, creamos una vacía usando proyecto/actividad actuales
     if @rows.empty?
       empty_daily = {}
       @week_days.each { |d| empty_daily[d] = 0.0 }
@@ -155,7 +170,7 @@ class TimesheetsController < ApplicationController
       @rows << {
         project: @current_project,
         issue: nil,
-        activity: @activities_hours.first,
+        activity: @activities_for_project.first,
         comments: '',
         daily_hours: empty_daily
       }
@@ -171,7 +186,7 @@ class TimesheetsController < ApplicationController
         limit(200)
     end
 
-    # Aseguramos incluir issues ya usadas aunque estén cerradas o fuera del scope
+    # Incluir issues ya usadas aunque estén cerradas
     used_issues = @rows.map { |r| r[:issue] }.compact
     missing     = used_issues.reject { |iss| @issues_for_project.include?(iss) }
     @issues_for_project += missing
@@ -280,6 +295,21 @@ def project_issues
   }
 end
 
+def project_activities
+  project = Project.find_by(id: params[:project_id])
+
+  activities =
+    if project
+      # actividades de imputación habilitadas para ese proyecto
+      TimeEntryActivity.for_project(project)
+    else
+      TimeEntryActivity.active
+    end
+
+  render json: activities.map { |a|
+    { id: a.id, name: a.name }
+  }
+end
 
   private
 

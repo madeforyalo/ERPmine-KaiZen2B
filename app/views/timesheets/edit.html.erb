@@ -39,30 +39,45 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
 
-        $(document).on('change', '.project-select', function() {
-            var projectId = $(this).val();
-            var rowIndex  = $(this).data('row-index');
+            $(document).on('change', '.project-select', function() {
+                var projectId = $(this).val();
+                var rowIndex  = $(this).data('row-index');
 
-            var issueSelect = $('#issue-select-' + rowIndex);
+                var issueSelect    = $('#issue-select-' + rowIndex);
+                var activitySelect = $('#activity-select-' + rowIndex);
 
-            if (!issueSelect.length) return;
+                // limpiar combos actuales
+                if (issueSelect.length) {
+                    issueSelect.empty().trigger('change');
+                }
+                if (activitySelect.length) {
+                    activitySelect.empty().trigger('change');
+                }
 
-            // limpiar opciones actuales
-            issueSelect.empty().trigger('change');
+                if (!projectId) return;
 
-            if (!projectId) return;
+                // 1) Cargar issues abiertas del proyecto
+                if (issueSelect.length) {
+                    $.getJSON('/timesheets/project_issues', { project_id: projectId }, function(data) {
+                    data.forEach(function(item) {
+                        var opt = new Option(item.text, item.id, false, false);
+                        issueSelect.append(opt);
+                    });
+                    issueSelect.trigger('change');
+                    });
+                }
 
-            // cargar issues vía AJAX
-            $.getJSON('/timesheets/project_issues', { project_id: projectId }, function(data) {
-            data.forEach(function(item) {
-                var option = new Option(item.text, item.id, false, false);
-                issueSelect.append(option);
+                // 2) Cargar actividades del proyecto
+                if (activitySelect.length) {
+                    $.getJSON('/timesheets/project_activities', { project_id: projectId }, function(data) {
+                    data.forEach(function(item) {
+                        var opt = new Option(item.name, item.id, false, false);
+                        activitySelect.append(opt);
+                    });
+                    activitySelect.trigger('change');
+                    });
+                }
             });
-
-            issueSelect.trigger('change');
-            });
-        });
-
         });
     </script>
 
@@ -174,10 +189,13 @@
             </td>
 
             <td>
-              <%= select_tag "rows[#{idx}][activity_id]",
-                    options_from_collection_for_select(@activities_hours, 'id', 'name', row[:activity]&.id || @activities_hours.first&.id),
-                    include_blank: false,
-                    style: 'width: 100px;' %>
+                <% activity_options = @activities_for_project.map { |a| [a.name, a.id] } %>
+                <%= select_tag "rows[#{idx}][activity_id]",
+                    options_for_select(activity_options, row[:activity]&.id),
+                    include_blank: true,
+                    class: 'timesheets-select activity-select',
+                    id: "activity-select-#{idx}",
+                    style: 'width: 120px;' %>
             </td>
             <td>
               <%= text_field_tag "rows[#{idx}][comments]", row[:comments],
@@ -185,12 +203,14 @@
                     style: 'width: 300px;' %>
             </td>
 
-            <% @week_days.each do |day| %>
-              <% hours = row[:daily_hours][day] || 0.0 %>
-              <td style="text-align:center;">
-                <%= number_field_tag "rows[#{idx}][hours][#{day}]", hours,
-                      step: 0.25, min: 0, style: 'width:60px;' %>
-              </td>
+                <% @week_days.each do |day| %>
+                <% hours = row[:daily_hours][day] || 0.0 %>
+                <td style="text-align:center;">
+                    <%= number_field_tag "rows[#{idx}][hours][#{day}]", hours,
+                        step: 0.25, min: 0, style: 'width:60px;',
+                        class: 'hours-input',
+                        data: { day: day } %>
+            </td>
             <% end %>
 
             <td style="text-align:center;">
@@ -199,6 +219,26 @@
           </tr>
         <% end %>
       </tbody>
+      <tfoot>
+        <tr id="totals-row">
+          <!-- celdas de Proyecto / Petición / Actividad / Comentario -->
+          <td colspan="4" style="text-align:right; font-weight:bold;">Total</td>
+
+          <!-- Subtotales por día -->
+          <% @week_days.each do |day| %>
+            <td class="day-total"
+                data-day="<%= day %>"
+                style="text-align:center; font-weight:bold;">
+              0.00
+            </td>
+          <% end %>
+
+          <!-- Total general -->
+          <td style="text-align:center; font-weight:bold;">
+            Total: <span id="grand-total">0.00</span>
+          </td>
+        </tr>
+      </tfoot>
     </table>
 
     <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
@@ -214,6 +254,36 @@
 <% end %>
 
 <script>
+// Recalcula subtotales por día y total general
+  function recalcTotals() {
+    var dayTotals = {};
+    var grandTotal = 0.0;
+
+    $('#timesheet_rows input.hours-input').each(function() {
+      var v = $(this).val();
+      if (v === '') return;
+
+      // soportar 1,5 y 1.5
+      var hours = parseFloat(v.toString().replace(',', '.'));
+      if (isNaN(hours) || hours <= 0) return;
+
+      var day = $(this).data('day');
+      if (!dayTotals[day]) dayTotals[day] = 0.0;
+
+      dayTotals[day] += hours;
+      grandTotal += hours;
+    });
+
+    // actualizar subtotales por día
+    $('#totals-row .day-total').each(function() {
+      var day = $(this).data('day');
+      var total = dayTotals[day] || 0.0;
+      $(this).text(total.toFixed(2));
+    });
+
+    // actualizar total general
+    $('#grand-total').text(grandTotal.toFixed(2));
+  }
 document.addEventListener('DOMContentLoaded', function() {
 
   // Re-inicializa Select2 en los selects de una fila dada
@@ -281,6 +351,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // inicializar Select2 en la nueva fila
     initSelect2ForRow($clone);
+    recalcTotals();
   }
 
   // botones Add Row (arriba y abajo)
@@ -296,11 +367,19 @@ document.addEventListener('DOMContentLoaded', function() {
     var $rows  = $tbody.find('tr');
     if ($rows.length > 1) {
       $(this).closest('tr').remove();
+      recalcTotals(); // 👈 recalcular luego de borrar
     }
   });
 
-  // por si acaso, re-inicializar Select2 en filas ya existentes al cargar
+   // por si acaso, re-inicializar Select2 en filas ya existentes al cargar
   initSelect2ForRow($('#timesheet_rows'));
+
+  // calcular totales iniciales
+  recalcTotals();
+
+  // recalcular cada vez que cambie una celda de horas
+  $(document).on('input', 'input.hours-input', function() {
+    recalcTotals();
 });
 </script>
 

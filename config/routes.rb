@@ -6,6 +6,7 @@ get 'timesheets', to: 'timesheets#index'
 get 'timesheets/edit', to: 'timesheets#edit', as: 'edit_timesheet'
 post 'timesheets/save', to: 'timesheets#save', as: 'timesheets_save'
 get 'timesheets/project_issues', to: 'timesheets#project_issues'
+get 'timesheets/project_activities', to: 'timesheets#project_activities'
 
 # 2. Rutas para acciones futuras (Guardar, Enviar, Aprobar)
 # Las usaremos cuando programemos los botones de la tabla
