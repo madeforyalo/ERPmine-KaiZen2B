@@ -267,30 +267,31 @@
 <% end %>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-// Recalcula subtotales por día y total general
+    document.addEventListener('DOMContentLoaded', function() {
+
+  // === 1) Totales por día y total general ===
   function recalcTotals() {
-    var dayTotals = {};
+    var dayTotals  = {};
     var grandTotal = 0.0;
 
     $('#timesheet_rows input.hours-input').each(function() {
       var v = $(this).val();
-      if (v === '') return;
+      if (!v) return;
 
       // soportar 1,5 y 1.5
-      var hours = parseFloat(v.toString().replace(',', '.'));
-      if (isNaN(hours) || hours <= 0) return;
+      var hours = parseFloat(String(v).replace(',', '.'));
+      if (isNaN(hours)) return;
 
       var day = $(this).data('day');
       if (!dayTotals[day]) dayTotals[day] = 0.0;
 
       dayTotals[day] += hours;
-      grandTotal += hours;
+      grandTotal      += hours;
     });
 
     // actualizar subtotales por día
     $('#totals-row .day-total').each(function() {
-      var day = $(this).data('day');
+      var day   = $(this).data('day');
       var total = dayTotals[day] || 0.0;
       $(this).text(total.toFixed(2));
     });
@@ -299,17 +300,13 @@ document.addEventListener('DOMContentLoaded', function() {
     $('#grand-total').text(grandTotal.toFixed(2));
   }
 
-  // Re-inicializa Select2 en los selects de una fila dada
-  function initSelect2ForRow($row) {
+  // === 2) Inicializar Select2 ===
+  function initSelect2ForCtx($ctx) {
     if (typeof $ === 'undefined' || !$.fn.select2) return;
 
-    $row.find('select.timesheets-select').each(function() {
+    $ctx.find('select.timesheets-select').each(function() {
       var $s = $(this);
-
-      // por las dudas, si ya tenía select2, destruirlo
-      if ($s.data('select2')) {
-        $s.select2('destroy');
-      }
+      if ($s.data('select2')) return; // evitar doble init
 
       $s.select2({
         width: 'style',
@@ -319,12 +316,13 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  // === 3) Agregar fila ===
   function addRow() {
     var $tbody = $('#timesheet_rows');
     if (!$tbody.length) return;
 
-    var $rows  = $tbody.find('tr');
-    var $last  = $rows.last();
+    var $rows = $tbody.find('tr');
+    var $last = $rows.last();
     if (!$last.length) return;
 
     var newIndex = $rows.length;
@@ -333,11 +331,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // nuevo índice de fila
     $clone.attr('data-index', newIndex);
 
-    // eliminar wrappers de select2 clonados
+    // eliminar wrappers de Select2 clonados y mostrar selects reales
     $clone.find('span.select2').remove();
-    $clone.find('select').show(); // que los <select> vuelvan a ser visibles
+    $clone.find('select').show();
 
-    // reindexar names / ids y limpiar valores de inputs
+    // reindexar names/ids y limpiar valores de inputs
     $clone.find('input, select').each(function() {
       var $el = $(this);
 
@@ -363,36 +361,60 @@ document.addEventListener('DOMContentLoaded', function() {
     $tbody.append($clone);
 
     // inicializar Select2 en la nueva fila
-    initSelect2ForRow($clone);
+    initSelect2ForCtx($clone);
     recalcTotals();
   }
 
-  // botones Add Row (arriba y abajo)
+  // === 4) Eventos ===
+
+  // Botones Add Row (arriba y abajo)
   $('#add_row_top, #add_row_bottom').on('click', function(e) {
     e.preventDefault();
     addRow();
   });
 
-  // eliminar fila (dejamos al menos 1)
+  // Eliminar fila (dejamos al menos 1)
   $('#timesheet_rows').on('click', '.remove-row', function(e) {
     e.preventDefault();
     var $tbody = $('#timesheet_rows');
     var $rows  = $tbody.find('tr');
     if ($rows.length > 1) {
       $(this).closest('tr').remove();
-      recalcTotals(); // 👈 recalcular luego de borrar
+      recalcTotals();
     }
   });
 
-   // por si acaso, re-inicializar Select2 en filas ya existentes al cargar
-  initSelect2ForRow($('#timesheet_rows'));
+  // Cambio de proyecto -> recargar Peticiones vía AJAX
+  $(document).on('change', '.project-select', function() {
+    var projectId = $(this).val();
+    var rowIndex  = $(this).data('row-index');
+    var issueSelect = $('#issue-select-' + rowIndex);
 
-  // calcular totales iniciales
-  recalcTotals();
+    if (!issueSelect.length) return;
 
-  // recalcular cada vez que cambie una celda de horas
+    // limpiar opciones actuales
+    issueSelect.empty().trigger('change');
+
+    if (!projectId) return;
+
+    $.getJSON('/timesheets/project_issues', { project_id: projectId }, function(data) {
+      data.forEach(function(item) {
+        var opt = new Option(item.text, item.id, false, false);
+        issueSelect.append(opt);
+      });
+      issueSelect.trigger('change');
+    });
+  });
+
+  // Recalcular totales al modificar horas
   $(document).on('input', 'input.hours-input', function() {
     recalcTotals();
+  });
+
+  // === 5) Init al cargar la página ===
+  initSelect2ForCtx($(document));
+  recalcTotals();
 });
 </script>
+
 
