@@ -270,35 +270,45 @@
     document.addEventListener('DOMContentLoaded', function() {
 
   // === 1) Totales por día y total general ===
-  function recalcTotals() {
+  
     var dayTotals  = {};
     var grandTotal = 0.0;
 
     $('#timesheet_rows input.hours-input').each(function() {
       var v = $(this).val();
       if (!v) return;
+    function recalcTotals() {
+    var dayTotals  = {};
+    var grandTotal = 0.0;
 
-      // soportar 1,5 y 1.5
-      var hours = parseFloat(String(v).replace(',', '.'));
-      if (isNaN(hours)) return;
+    $('#timesheet_rows input.hours-input').each(function() {
+        var v = $(this).val();
+        if (!v) return;
 
-      var day = $(this).data('day');
-      if (!dayTotals[day]) dayTotals[day] = 0.0;
+        // soportar 1,5 y 1.5
+        var hours = parseFloat(String(v).replace(',', '.'));
+        if (isNaN(hours)) return;
 
-      dayTotals[day] += hours;
-      grandTotal      += hours;
+        // usamos SIEMPRE cadena como clave
+        var dayKey = String($(this).data('day'));
+
+        if (!dayTotals[dayKey]) dayTotals[dayKey] = 0.0;
+
+        dayTotals[dayKey] += hours;
+        grandTotal        += hours;
     });
 
     // actualizar subtotales por día
     $('#totals-row .day-total').each(function() {
-      var day   = $(this).data('day');
-      var total = dayTotals[day] || 0.0;
-      $(this).text(total.toFixed(2));
+        var dayKey = String($(this).data('day'));
+        var total  = dayTotals[dayKey] || 0.0;
+        $(this).text(total.toFixed(2));
     });
 
     // actualizar total general
     $('#grand-total').text(grandTotal.toFixed(2));
-  }
+    }
+    }
 
   // === 2) Inicializar Select2 ===
   function initSelect2ForCtx($ctx) {
