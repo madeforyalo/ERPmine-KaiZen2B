@@ -193,15 +193,29 @@
 
             <!-- Actividad -->
             <td>
-            <% activity_collection = @activities_for_project || [] %>
-            <% activity_options = activity_collection.map { |a| [a.name, a.id] } %>
+                <% row_project = row[:project] || @current_project %>
 
-            <%= select_tag "rows[#{idx}][activity_id]",
-                    options_for_select(activity_options, row[:activity]&.id),
-                    include_blank: true,
-                    class: 'timesheets-select activity-select',
-                    id: "activity-select-#{idx}",
-                    style: 'width: 120px;' %>
+                <% activity_collection =
+                    if row_project
+                        TimeEntryActivity.for_project(row_project)
+                    else
+                        TimeEntryActivity.active
+                    end %>
+
+                <% activity_collection ||= [] %>
+
+                <% if row[:activity] && !activity_collection.include?(row[:activity]) %>
+                    <% activity_collection += [row[:activity]] %>
+                <% end %>
+
+                <% activity_options = activity_collection.map { |a| [a.name, a.id] } %>
+
+                <%= select_tag "rows[#{idx}][activity_id]",
+                        options_for_select(activity_options, row[:activity]&.id),
+                        include_blank: true,
+                        class: 'timesheets-select activity-select',
+                        id: "activity-select-#{idx}",
+                        style: 'width: 120px;' %>
             </td>
 
             <!-- Comentario -->
