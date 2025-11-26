@@ -267,6 +267,7 @@
 <% end %>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
 // Recalcula subtotales por día y total general
   function recalcTotals() {
     var dayTotals = {};
@@ -297,7 +298,6 @@
     // actualizar total general
     $('#grand-total').text(grandTotal.toFixed(2));
   }
-document.addEventListener('DOMContentLoaded', function() {
 
   // Re-inicializa Select2 en los selects de una fila dada
   function initSelect2ForRow($row) {
