@@ -151,7 +151,32 @@
   <div class="autoscroll">
     <p>Total: <b><%= l_hours(@total_hours || 0.0) %></b></p>
 
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+          <div>
+            <label>Ver:</label>
+            <%= select_tag :per_page,
+                  options_for_select([10,20,30,50], @per_page),
+                  onchange: "document.getElementById('query_form').submit();",
+                  style: "width:80px;" %>
+            <span>semanas</span>
+          </div>
     
+          <div>
+            <% if @page_count.to_i > 1 %>
+              <% if @page > 1 %>
+                <%= link_to "« Anterior",  url_for(params.permit!.to_h.merge(page: @page - 1, per_page: @per_page)) %>
+              <% end %>
+    
+              <span style="margin:0 10px;">
+                Página <b><%= @page %></b> de <b><%= @page_count %></b>
+              </span>
+    
+              <% if @page < @page_count %>
+                <%= link_to "Siguiente »", url_for(params.permit!.to_h.merge(page: @page + 1, per_page: @per_page)) %>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
     
     <table class="list timesheets">
     <thead>
@@ -187,18 +212,18 @@
         
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
           <div>
-            <span>Ver:</span>
+            <label>Ver:</label>
             <%= select_tag :per_page,
                   options_for_select([10,20,30,50], @per_page),
-                  onchange: "this.form.submit();",
+                  onchange: "document.getElementById('query_form').submit();",
                   style: "width:80px;" %>
-            <span>semanas por página</span>
+            <span>semanas</span>
           </div>
     
           <div>
             <% if @page_count.to_i > 1 %>
               <% if @page > 1 %>
-                <%= link_to "« Anterior", url_for(params.permit!.to_h.merge(page: @page - 1)) %>
+                <%= link_to "« Anterior",  url_for(params.permit!.to_h.merge(page: @page - 1, per_page: @per_page)) %>
               <% end %>
     
               <span style="margin:0 10px;">
@@ -206,7 +231,7 @@
               </span>
     
               <% if @page < @page_count %>
-                <%= link_to "Siguiente »", url_for(params.permit!.to_h.merge(page: @page + 1)) %>
+                <%= link_to "Siguiente »", url_for(params.permit!.to_h.merge(page: @page + 1, per_page: @per_page)) %>
               <% end %>
             <% end %>
           </div>

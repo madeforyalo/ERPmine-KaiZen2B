@@ -108,6 +108,7 @@ class TimesheetsController < ApplicationController
       @per_page = 10 unless [10, 20, 30, 50].include?(@per_page)
 
       @page = (params[:page].presence || 1).to_i
+      @page = 1 if params[:per_page].present?
       @page = 1 if @page < 1
 
       @total_count = @weeks.size
