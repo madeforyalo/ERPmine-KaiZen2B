@@ -99,7 +99,7 @@ class TimesheetsController < ApplicationController
           @total_hours += hours.to_f
         end
       end
-
+    end
 
   def edit
 
@@ -416,6 +416,7 @@ end
     @start_of_week = @from_date || today.beginning_of_week
     @end_of_week   = @to_date   || today.end_of_week
   end
+
   def weeks_in_range(from, to)
     weeks = []
     current = from.beginning_of_week(:monday)
