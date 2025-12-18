@@ -224,6 +224,23 @@ class TimesheetsController < ApplicationController
   week_start = Date.parse(params[:week_start])
   week_end   = week_start + 6
 
+  today = Date.today
+
+  params[:rows]&.each do |_idx, row|
+    next unless row[:hours].is_a?(Hash)
+
+    row[:hours].each do |date_str, _val|
+      spent_on = Date.parse(date_str) rescue nil
+      next unless spent_on
+
+      if spent_on > today
+        flash[:error] = "No se puede cargar horas en fechas futuras (#{spent_on})."
+        redirect_to action: 'edit', user_id: params[:user_id], start_date: params[:start_date]
+        return
+      end
+    end
+  end
+
   # 🔒 Permiso: propio, coordinador o admin
   unless can_manage_timesheets_for?(user)
     render_403

@@ -211,13 +211,15 @@
             </td>
 
             <!-- Horas por día -->
+            <% today = Date.today %>
             <% @week_days.each_with_index do |day, day_index| %>
             <% hours = row[:daily_hours][day] || 0.0 %>
             <td style="text-align:center;">
                 <%= number_field_tag "rows[#{idx}][hours][#{day}]", hours,
                     step: 0.25, min: 0, style: 'width:60px;',
                     class: 'hours-input',
-                    data: { day_index: day_index } %>
+                    data: { day_index: day_index },
+                    readonly: (day > today) %>
             </td>
             <% end %>
 
