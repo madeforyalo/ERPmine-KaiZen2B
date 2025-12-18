@@ -163,25 +163,21 @@
         </tr>
       </thead>
       <tbody>
-        <% @users.each do |user| %>
-          <tr class="<%= cycle('odd', 'even') %>">
-            <td><%= @start_of_week.cweek %></td>
-            <td><%= format_date(@start_of_week) %></td>
-            <td><%= link_to_user user %></td>
-            <% hours = (@user_hours[user.id] || 0.0).to_f %>
-            <td align="center"><%= l_hours(hours) %></td>
-            <td align="center"><%= hours > 0 ? 'Nuevo' : 'Empty' %></td>
-            <td class="buttons">
-              <% if can_manage_timesheets_for?(user) %>
-                <%= link_to image_tag('edit.png'),
-                  edit_timesheet_path(
-                    user_id: user.id,
-                    start_date: @start_of_week,
-                    project_id: @project&.id
-                  ),
-                  title: 'Editar' %>
-              <% end %>
+        <% @rows.each do |row| %>
+          <tr>
+            <td><%= row[:week_number] %></td>
+            <td><%= format_date(row[:week_start]) %></td>
+            <td><%= link_to_user row[:user] %></td>
+            <td><%= format('%.2f', row[:hours]) %> horas</td>
+            <td>
+              <%= row[:hours] > 0 ? 'Nuevo' : 'Empty' %>
             </td>
+            <td class="buttons">
+              <%= link_to image_tag('edit.png'),
+                    timesheets_edit_path(
+                      user_id: row[:user].id,
+                      start_date: row[:week_start]
+                    ) %>
             </td>
           </tr>
         <% end %>

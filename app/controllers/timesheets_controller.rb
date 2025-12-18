@@ -60,28 +60,46 @@ class TimesheetsController < ApplicationController
         []
       end
 
-    # --------------------------------------------------------
-    # Cálculo de horas por usuario y total general
-    # --------------------------------------------------------
-    @user_hours  = {}
-    @total_hours = 0.0
+      # --------------------------------------------------------
+      # Semanas dentro del rango (Lunes->Domingo)
+      # --------------------------------------------------------
+      @weeks = []
+      if @from_date && @to_date
+        w = @from_date.beginning_of_week(:monday)
+        last = @to_date.end_of_week(:monday)
 
-    if @users.any?
-      scope = TimeEntry.where(user_id: @users.map(&:id))
+        while w <= last
+          @weeks << { start: w, end: w.end_of_week(:monday), cweek: w.cweek }
+          w += 1.week
+        end
+      end
 
-      # Filtrar por proyecto si hay uno seleccionado
-      scope = scope.where(project_id: @project.id) if @project
 
-      # Filtrar por rango de fechas
-      scope = scope.where('spent_on >= ?', @from_date) if @from_date
-      scope = scope.where('spent_on <= ?', @to_date)   if @to_date
+      # --------------------------------------------------------
+      # Cálculo de horas por SEMANA y por usuario + total general
+      # --------------------------------------------------------
+      @hours_by_week_user = {}   # { [week_start, user_id] => hours }
+      @total_hours        = 0.0
 
-      # Devuelve un hash { user_id => horas }
-      @user_hours = scope.group(:user_id).sum(:hours)
+      if @users.any? && @weeks.any?
+        scope = TimeEntry.where(user_id: @users.map(&:id))
+        scope = scope.where(project_id: @project.id) if @project
 
-      @total_hours = @user_hours.values.map(&:to_f).sum
-    end
-  end
+        # Limitar al rango completo para no traer de más
+        scope = scope.where('spent_on >= ?', @from_date) if @from_date
+        scope = scope.where('spent_on <= ?', @to_date)   if @to_date
+
+        # Traemos spent_on y hours y lo agrupamos por "week_start (lunes)" + user_id
+        raw = scope.group(:user_id, "DATE_SUB(spent_on, INTERVAL WEEKDAY(spent_on) DAY)").sum(:hours)
+
+        # raw = { [user_id, week_start_date] => hours } según DB,
+        # normalizamos a { [week_start_date, user_id] => hours }
+        raw.each do |(user_id, week_start), hours|
+          @hours_by_week_user[[week_start.to_date, user_id.to_i]] = hours.to_f
+          @total_hours += hours.to_f
+        end
+      end
+
 
   def edit
 
@@ -397,5 +415,20 @@ end
     @date          = today
     @start_of_week = @from_date || today.beginning_of_week
     @end_of_week   = @to_date   || today.end_of_week
+  end
+  def weeks_in_range(from, to)
+    weeks = []
+    current = from.beginning_of_week(:monday)
+
+    while current <= to
+      weeks << {
+        start: current,
+        end: current.end_of_week(:monday),
+        week_number: current.cweek
+      }
+      current += 1.week
+    end
+
+    weeks
   end
 end
