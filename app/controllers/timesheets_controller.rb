@@ -99,6 +99,21 @@ class TimesheetsController < ApplicationController
           @total_hours += hours.to_f
         end
       end
+      # --------------------------------------------------------
+      # Paginación (por defecto 10)
+      # --------------------------------------------------------
+      @per_page = (params[:per_page].presence || 10).to_i
+      @per_page = 10 unless [10, 20, 30, 50].include?(@per_page)
+
+      @page = (params[:page].presence || 1).to_i
+      @page = 1 if @page < 1
+
+      @total_count = @rows.size
+      @page_count  = (@total_count.to_f / @per_page).ceil
+
+      offset = (@page - 1) * @per_page
+      @weeks_page = @rows.slice(offset, @per_page) || []
+
     end
 
   def edit
