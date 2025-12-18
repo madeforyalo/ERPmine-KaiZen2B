@@ -99,17 +99,23 @@ class TimesheetsController < ApplicationController
           @total_hours += hours.to_f
         end
       end
-     # --------------------------------------------------------
-      # Paginación de semanas (siempre define @weeks_page)
       # --------------------------------------------------------
-      @weeks ||= []
+      # Paginación de semanas (persistente)
+      # --------------------------------------------------------
+      allowed_per_page = [10, 20, 30, 50]
 
-      @per_page = (params[:per_page].presence || 10).to_i
-      @per_page = 10 unless [10, 20, 30, 50].include?(@per_page)
+      if params[:per_page].present?
+        per = params[:per_page].to_i
+        per = 10 unless allowed_per_page.include?(per)
+        session[:timesheets_per_page] = per
+      end
+
+      @per_page = (session[:timesheets_per_page] || 10).to_i
+      @per_page = 10 unless allowed_per_page.include?(@per_page)
 
       @page = (params[:page].presence || 1).to_i
-      #@page = 1 if params[:per_page].present?
       @page = 1 if @page < 1
+      @page = 1 if params[:page].blank? && params[:per_page].present?
 
       @total_count = @weeks.size
       @page_count  = (@total_count.to_f / @per_page).ceil
