@@ -191,7 +191,7 @@
         </tr>
       </thead>
       <tbody>
-        <% @weeks_page.each do |w| %>
+        <% (@weeks_page || []).each do |w| %>
           <% @users.each do |user| %>
             <% hours = @hours_by_week_user[[w[:start].to_date, user.id]] || 0.0 %>
             <tr class="<%= cycle('odd','even') %>">
