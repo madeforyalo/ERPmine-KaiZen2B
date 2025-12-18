@@ -151,65 +151,65 @@
   <div class="autoscroll">
     <p>Total: <b><%= l_hours(@total_hours || 0.0) %></b></p>
 
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
-      <div>
-        <span>Ver:</span>
-        <%= select_tag :per_page,
-              options_for_select([10,20,30,50], @per_page),
-              onchange: "this.form.submit();",
-              style: "width:80px;" %>
-        <span>semanas por página</span>
-      </div>
-
-      <div>
-        <% if @page_count.to_i > 1 %>
-          <% if @page > 1 %>
-            <%= link_to "« Anterior", url_for(params.permit!.to_h.merge(page: @page - 1)) %>
-          <% end %>
-
-          <span style="margin:0 10px;">
-            Página <b><%= @page %></b> de <b><%= @page_count %></b>
-          </span>
-
-          <% if @page < @page_count %>
-            <%= link_to "Siguiente »", url_for(params.permit!.to_h.merge(page: @page + 1)) %>
-          <% end %>
-        <% end %>
-      </div>
-    </div>
-
-
-    <table class="list timesheets">
-      <thead>
-        <tr>
-          <th>Semana</th>
-          <th>Fecha de inicio</th>
-          <th>Usuario</th>
-          <th>Horas</th>
-          <th>Estado</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% (@weeks_page || []).each do |w| %>
-          <% @users.each do |user| %>
-            <% hours = @hours_by_week_user[[w[:start].to_date, user.id]] || 0.0 %>
-            <tr class="<%= cycle('odd','even') %>">
-              <td><%= w[:cweek] %></td>
-              <td><%= format_date(w[:start]) %></td>
-              <td><%= link_to_user user %></td>
-              <td align="center"><%= format('%.2f', hours) %> horas</td>
-              <td align="center"><%= hours > 0 ? 'Nuevo' : 'Empty' %></td>
-              <td class="buttons">
-                <%= link_to image_tag('edit.png'),
-                      { controller: 'timesheets', action: 'edit', user_id: user.id, start_date: w[:start] },
-                      title: 'Editar' %>
-              </td>
-            </tr>
-          <% end %>
-        <% end %>
-      </tbody>
-    </table>
     
-    </div>
+    
+    <table class="list timesheets">
+    <thead>
+    <tr>
+    <th>Semana</th>
+    <th>Fecha de inicio</th>
+    <th>Usuario</th>
+    <th>Horas</th>
+    <th>Estado</th>
+    <th>Acciones</th>
+    </tr>
+    </thead>
+    <tbody>
+    <% (@weeks_page || []).each do |w| %>
+      <% @users.each do |user| %>
+        <% hours = @hours_by_week_user[[w[:start].to_date, user.id]] || 0.0 %>
+        <tr class="<%= cycle('odd','even') %>">
+        <td><%= w[:cweek] %></td>
+        <td><%= format_date(w[:start]) %></td>
+        <td><%= link_to_user user %></td>
+        <td align="center"><%= format('%.2f', hours) %> horas</td>
+        <td align="center"><%= hours > 0 ? 'Nuevo' : 'Empty' %></td>
+        <td class="buttons">
+        <%= link_to image_tag('edit.png'),
+        { controller: 'timesheets', action: 'edit', user_id: user.id, start_date: w[:start] },
+        title: 'Editar' %>
+        </td>
+        </tr>
+        <% end %>
+        <% end %>
+        </tbody>
+        </table>
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+          <div>
+            <span>Ver:</span>
+            <%= select_tag :per_page,
+                  options_for_select([10,20,30,50], @per_page),
+                  onchange: "this.form.submit();",
+                  style: "width:80px;" %>
+            <span>semanas por página</span>
+          </div>
+    
+          <div>
+            <% if @page_count.to_i > 1 %>
+              <% if @page > 1 %>
+                <%= link_to "« Anterior", url_for(params.permit!.to_h.merge(page: @page - 1)) %>
+              <% end %>
+    
+              <span style="margin:0 10px;">
+                Página <b><%= @page %></b> de <b><%= @page_count %></b>
+              </span>
+    
+              <% if @page < @page_count %>
+                <%= link_to "Siguiente »", url_for(params.permit!.to_h.merge(page: @page + 1)) %>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+        </div>
 <% end %>
