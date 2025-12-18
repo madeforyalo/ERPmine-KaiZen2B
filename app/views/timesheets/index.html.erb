@@ -163,23 +163,22 @@
         </tr>
       </thead>
       <tbody>
-        <% @rows.each do |row| %>
-          <tr>
-            <td><%= row[:week_number] %></td>
-            <td><%= format_date(row[:week_start]) %></td>
-            <td><%= link_to_user row[:user] %></td>
-            <td><%= format('%.2f', row[:hours]) %> horas</td>
-            <td>
-              <%= row[:hours] > 0 ? 'Nuevo' : 'Empty' %>
-            </td>
-            <td class="buttons">
-              <%= link_to image_tag('edit.png'),
-                    timesheets_edit_path(
-                      user_id: row[:user].id,
-                      start_date: row[:week_start]
-                    ) %>
-            </td>
-          </tr>
+        <% @weeks.each do |w| %>
+          <% @users.each do |user| %>
+            <% hours = @hours_by_week_user[[w[:start].to_date, user.id]] || 0.0 %>
+            <tr class="<%= cycle('odd','even') %>">
+              <td><%= w[:cweek] %></td>
+              <td><%= format_date(w[:start]) %></td>
+              <td><%= link_to_user user %></td>
+              <td align="center"><%= format('%.2f', hours) %> horas</td>
+              <td align="center"><%= hours > 0 ? 'Nuevo' : 'Empty' %></td>
+              <td class="buttons">
+                <%= link_to image_tag('edit.png'),
+                      { controller: 'timesheets', action: 'edit', user_id: user.id, start_date: w[:start] },
+                      title: 'Editar' %>
+              </td>
+            </tr>
+          <% end %>
         <% end %>
       </tbody>
     </table>
