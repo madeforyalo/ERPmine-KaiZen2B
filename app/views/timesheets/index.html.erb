@@ -131,8 +131,16 @@
 
       <%= submit_tag 'Aceptar', class: 'small', name: nil %>
     </p>
-
-
+  </div>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+    <div>
+      <label style="font-weight:bold;">Ver:</label>
+      <%= select_tag :per_page,
+            options_for_select([10,20,30,50], @per_page),
+            onchange: "document.getElementById('query_form').submit();",
+            style: "width:80px;" %>
+      <span>semanas</span>
+    </div>
   </div>
 <% end %>
 
@@ -151,15 +159,15 @@
   <div class="autoscroll">
     <p>Total: <b><%= l_hours(@total_hours || 0.0) %></b></p>
 
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
-          <div>
-            <label>Ver:</label>
-            <%= select_tag :per_page,
-              options_for_select([10,20,30,50], @per_page),
-              onchange: "document.getElementById('query_form').submit();",
-              style: "width:80px;" %>
-            <span>semanas</span>
-          </div>
+      /*  # <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+        #   <div>
+        #     <label>Ver:</label>
+        #     <%= select_tag :per_page,
+        #       options_for_select([10,20,30,50], @per_page),
+        #       onchange: "document.getElementById('query_form').submit();",
+        #       style: "width:80px;" %>
+        #     <span>semanas</span>
+        #   </div> */
     
           <div>
             <% if @page_count.to_i > 1 %>
