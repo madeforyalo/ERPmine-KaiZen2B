@@ -132,6 +132,9 @@
       <%= submit_tag 'Aceptar', class: 'small', name: nil %>
     </p>
   </div>
+  
+  <p>Total: <b><%= l_hours(@total_hours || 0.0) %></b></p> 
+
   <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
     <div>
       <label style="font-weight:bold;">Ver:</label>
@@ -157,7 +160,7 @@
 <% else %>
 
   <div class="autoscroll">
-    <p>Total: <b><%= l_hours(@total_hours || 0.0) %></b></p>    
+       
           <div>
             <% if @page_count.to_i > 1 %>
               <% if @page > 1 %>
