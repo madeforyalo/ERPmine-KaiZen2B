@@ -157,18 +157,7 @@
 <% else %>
 
   <div class="autoscroll">
-    <p>Total: <b><%= l_hours(@total_hours || 0.0) %></b></p>
-
-      /*  # <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
-        #   <div>
-        #     <label>Ver:</label>
-        #     <%= select_tag :per_page,
-        #       options_for_select([10,20,30,50], @per_page),
-        #       onchange: "document.getElementById('query_form').submit();",
-        #       style: "width:80px;" %>
-        #     <span>semanas</span>
-        #   </div> */
-    
+    <p>Total: <b><%= l_hours(@total_hours || 0.0) %></b></p>    
           <div>
             <% if @page_count.to_i > 1 %>
               <% if @page > 1 %>
