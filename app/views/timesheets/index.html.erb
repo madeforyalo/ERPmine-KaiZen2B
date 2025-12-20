@@ -88,10 +88,6 @@
             options_for_select([['All Users', '']] + user_options, @selected_user.try(:id)),
             disabled: @users_for_filter.blank?,
             class: 'timesheets-select' %>
-
-      <span style="float:right;">
-        <%= link_to 'New Timesheet', '#', class: 'icon icon-add' %>
-      </span>
     </p>
 
     <p>
